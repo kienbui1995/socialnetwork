@@ -43,9 +43,16 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
+	services.SaveToken(id, tokenstring)
 	c.Header("token", tokenstring)
+	//tokenstruct trcut
+	type TokenStruct struct {
+		Token string `json:"token"`
+	}
+	token1 := TokenStruct{Token: tokenstring}
 	c.JSON(200, gin.H{
 		"code":    1,
 		"message": "Login successful!",
+		"data":    token1,
 	})
 }

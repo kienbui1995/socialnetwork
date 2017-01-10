@@ -33,7 +33,21 @@ func Login(login models.Login) (int, error) {
 	return res[0].UserID, nil
 }
 
-// SetToken func t insert token to db
-func SetToken(id int, token string) (bool, error) {
+// SaveToken func t insert token to db
+func SaveToken(userid int, token string) (bool, error) {
+	stmt := `
+	MATCH (u:User) WHERE u.userId = {userid} SET u.Token = {token}
+	`
+	params := neoism.Props{"userid": userid, "token": token}
+
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+	}
+
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
