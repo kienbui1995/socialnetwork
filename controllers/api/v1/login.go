@@ -12,10 +12,11 @@ var SuperSecretPassword = []byte("socialnetworkTLSEN")
 
 //Login func is controller login
 func Login(c *gin.Context) {
-	username := c.DefaultPostForm("username", "test")
-	password := c.DefaultPostForm("password", "test")
-	device := c.DefaultPostForm("device", "test")
-	if username != "test" && password != "test" && device != "test" {
+	defaultvalue := "test"
+	username := c.DefaultPostForm("username", defaultvalue)
+	password := c.DefaultPostForm("password", defaultvalue)
+	device := c.DefaultPostForm("device", defaultvalue)
+	if username == defaultvalue || password == defaultvalue || device == defaultvalue {
 		c.JSON(200, gin.H{
 			"code":    -1,
 			"message": "Missing a few parameters",
@@ -37,12 +38,14 @@ func Login(c *gin.Context) {
 	tokenstring, errtoken := middlewares.GenerateToken(id, device, SuperSecretPassword)
 	if errtoken != nil {
 		c.JSON(200, gin.H{
+			"code":  -1,
 			"error": errtoken,
 		})
 		return
 	}
 	c.Header("token", tokenstring)
 	c.JSON(200, gin.H{
-		"code": 1,
+		"code":    1,
+		"message": "Login successful!",
 	})
 }

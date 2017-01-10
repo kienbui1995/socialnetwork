@@ -10,7 +10,6 @@ import (
 
 // GetUser func  return info user
 func GetUser(c *gin.Context) {
-	//fmt.Printf("query: %s", c.Param("userid"))
 	userid, err := strconv.Atoi(c.Param("userid"))
 	if err != nil {
 		c.JSON(200, gin.H{
