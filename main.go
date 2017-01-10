@@ -6,25 +6,36 @@ import (
 )
 
 var (
-	neo4jURL = "Bolt://neo4j:tlis2016@148.72.245.101:7687"
+	neo4jURL = "Bolt://neo4j:tlis2016@155.94.144.150:7687"
 )
 
 func main() {
 	router := gin.Default()
 
+	// Work for login
+	router.POST("/login", apiv1.Login) // login method
+
 	// Work for User
 	RUser := router.Group("/user")
 	{
+		//Check token in Header
+		RUser.Use(apiv1.AuthHandler)
+
+		// user
 		RUser.GET("", apiv1.GetUser)               // get a few user
 		RUser.GET("/:userid", apiv1.GetUser)       // get a user
 		RUser.PUT("/:userid", apiv1.UpdateUser)    // update a user
 		RUser.POST("", apiv1.CreateUser)           // create a user
 		RUser.DELETE("/:userid", apiv1.DeleteUser) // delete a user
 
+		// user with post
 		RUser.POST("/:userid/post", apiv1.CreatePost)           // user create a post
 		RUser.GET("/:userid/post/:postid", apiv1.GetPost)       // user get a own post
 		RUser.PUT("/:userid/post/:postid", apiv1.UpdatePost)    // user update a own post
 		RUser.DELETE("/:userid/post/:postid", apiv1.DeletePost) // user delete a own post
+
+		//user with login
+		// /RUser.POST("/login", apiv1.Login)
 	}
 
 	// Work for Post

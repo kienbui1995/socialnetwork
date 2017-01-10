@@ -24,7 +24,7 @@ func CreateUser(user models.User) (int, error) {
 	}
 	errLabel := node.SetLabels([]string{"User"})
 	if errLabel != nil {
-		//node.Delete()
+		node.Delete()
 		return -1, errLabel
 	}
 	var propNode neoism.Props

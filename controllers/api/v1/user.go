@@ -14,7 +14,8 @@ func GetUser(c *gin.Context) {
 	userid, err := strconv.Atoi(c.Param("userid"))
 	if err != nil {
 		c.JSON(200, gin.H{
-			"error": err.Error(),
+			"code":    -1,
+			"message": err.Error(),
 		})
 	} else {
 		var errUser error
@@ -23,11 +24,14 @@ func GetUser(c *gin.Context) {
 		user, errUser = services.GetUser(user.UserID)
 		if errUser != nil {
 			c.JSON(200, gin.H{
-				"error": errUser.Error(),
+				"code":    -1,
+				"message": errUser.Error(),
 			})
 		} else {
 			c.JSON(200, gin.H{
-				"user": user,
+				"code":    1,
+				"message": "info a user",
+				"data":    user,
 			})
 		}
 	}
@@ -42,7 +46,7 @@ func CreateUser(c *gin.Context) {
 	username := c.DefaultPostForm("username", "")
 	password := c.DefaultPostForm("password", "")
 	email := c.DefaultPostForm("email", "")
-	if username != "" && password != "" && email != "" {
+	if username != "" && password != "" && email != "" && userid != -1 {
 		user.UserID = int(userid)
 		user.Username = username
 		user.Password = password
@@ -50,23 +54,26 @@ func CreateUser(c *gin.Context) {
 		user.Status = 0
 	} else {
 		c.JSON(200, gin.H{
-			"idUser": -1,
-			"error":  "Missing a few post value",
+			"code":    -1,
+			"message": "Missing a few post value",
 		})
 		return
 	}
 	user.UserID, errUser = services.CreateUser(user)
 	if errUser != nil {
 		c.JSON(200, gin.H{
-			"userid":  user.UserID,
-			"error":   errUser,
-			"message": "Created new user",
+			"code": -1,
+			//"userid":  user.UserID,
+			"message": errUser.Error(),
+			//"message": "Created new user",
 		})
 		return
 
 	}
 	c.JSON(200, gin.H{
-		"userid": user.UserID,
+		"code":    1,
+		"message": "Create user successful!",
+		"data":    user,
 	})
 
 }
@@ -83,7 +90,8 @@ func UpdateUser(c *gin.Context) {
 	userid, err = strconv.Atoi(c.Param("userid"))
 	if err != nil {
 		c.JSON(200, gin.H{
-			"error": err.Error(),
+			"code":    -1,
+			"message": err.Error(),
 		})
 		return
 	}
@@ -91,7 +99,8 @@ func UpdateUser(c *gin.Context) {
 	status, err = strconv.Atoi(c.PostForm("status"))
 	if err != nil {
 		c.JSON(200, gin.H{
-			"error": err.Error(),
+			"code":    -1,
+			"message": err.Error(),
 		})
 		return
 	}
@@ -102,7 +111,8 @@ func UpdateUser(c *gin.Context) {
 	update, err = services.UpdateUser(user)
 	if err != nil {
 		c.JSON(200, gin.H{
-			"error": err.Error(),
+			"code":    -1,
+			"message": err.Error(),
 		})
 		return
 	}
@@ -112,7 +122,8 @@ func UpdateUser(c *gin.Context) {
 		})
 	} else {
 		c.JSON(200, gin.H{
-			"userid": -1,
+			"code":    -1,
+			"message": "Don't update info in DB",
 		})
 	}
 
@@ -123,13 +134,15 @@ func DeleteUser(c *gin.Context) {
 	userid, err1 := strconv.Atoi(c.Param("userid"))
 	if err1 != nil {
 		c.JSON(200, gin.H{
-			"err1": err1,
+			"code":    -1,
+			"message": "Don't convert param userid",
 		})
 		return
 	}
 	del, err := services.DeleteUser(userid)
 
 	c.JSON(200, gin.H{
+		"code":    1,
 		"deleted": del,
 		"err":     err,
 	})
