@@ -15,9 +15,9 @@ func GetPost(c *gin.Context) {
 // CreatePost func to create a new post
 func CreatePost(c *gin.Context) {
 	post := models.Post{}
-	post.Content = c.DefaultPostForm("content", "")
+	post.Message = c.DefaultPostForm("content", "")
 	post.IsHidden = false
-	post.Status = "1"
+	post.Status = 1
 	post.Type = c.DefaultPostForm("type", "post")
 }
 

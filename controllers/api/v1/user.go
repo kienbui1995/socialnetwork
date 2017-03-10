@@ -19,8 +19,8 @@ func GetUser(c *gin.Context) {
 	} else {
 		var errUser error
 		user := models.User{}
-		user.UserID = userid
-		user, errUser = services.GetUser(user.UserID)
+		// user.UserID = userid
+		user, errUser = services.GetUser(userid)
 		if errUser != nil {
 			c.JSON(200, gin.H{
 				"code":    -1,

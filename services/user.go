@@ -11,11 +11,12 @@ import (
 // CreateUser func
 func CreateUser(user models.User) (int, error) {
 	p := neoism.Props{
-		"userId":   int(user.UserID),
+		//"userId":   int(user.UserID),
 		"Username": user.Username,
 		"Password": user.Password,
-		"Email":    user.Email,
-		"Status":   int(user.Status),
+
+		"Email":  user.Email,
+		"Status": int(user.Status),
 	}
 
 	node, errNode := conn.CreateNode(p)
@@ -27,15 +28,15 @@ func CreateUser(user models.User) (int, error) {
 		node.Delete()
 		return -1, errLabel
 	}
-	var propNode neoism.Props
-	var err error
-	propNode, err = node.Properties()
-	if err != nil {
-		return -1, err
-	}
-	userid := propNode["userId"].(float64)
-	id := int(userid)
-	return id, nil
+	// var propNode neoism.Props
+	// var err error
+	// propNode, err = node.Properties()
+	// if err != nil {
+	// 	return -1, err
+	// }
+	userid := node.Id()
+
+	return userid, nil
 }
 
 // GetUser func

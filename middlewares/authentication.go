@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -44,4 +45,21 @@ func ValidateToken(tokenstring string, secret []byte) (bool, error) {
 	}
 	return false, nil
 
+}
+
+// ExtractClaims func to get map claims
+func ExtractClaims(tokenStr string, secret []byte) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		// check token signing method etc
+		return secret, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
+	}
+	return nil, errors.New("Don't extract claim!")
 }

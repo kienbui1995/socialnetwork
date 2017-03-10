@@ -10,9 +10,10 @@ import (
 // SuperSecretPassword var to Sign for Token
 var SuperSecretPassword = []byte("socialnetworkTLSEN")
 
-//Login func is controller login
+// Login func is controller login
 func Login(c *gin.Context) {
-	defaultvalue := "test"
+
+	defaultvalue := ""
 	username := c.DefaultPostForm("username", defaultvalue)
 	password := c.DefaultPostForm("password", defaultvalue)
 	device := c.DefaultPostForm("device", defaultvalue)
@@ -38,14 +39,14 @@ func Login(c *gin.Context) {
 	tokenstring, errtoken := middlewares.GenerateToken(id, device, SuperSecretPassword)
 	if errtoken != nil {
 		c.JSON(200, gin.H{
-			"code":  -1,
-			"error": errtoken,
+			"code":    -1,
+			"message": errtoken.Error(),
 		})
 		return
 	}
 	services.SaveToken(id, tokenstring)
-	c.Header("token", tokenstring)
-	//tokenstruct trcut
+	//c.Header("token", tokenstring)
+	//tokenstruct truct
 	type TokenStruct struct {
 		Token string `json:"token"`
 	}
@@ -55,4 +56,52 @@ func Login(c *gin.Context) {
 		"message": "Login successful!",
 		"data":    token1,
 	})
+}
+
+// Logout func to remove token of user
+func Logout(c *gin.Context) {
+	// delete token from DB
+	claims, err := middlewares.ExtractClaims(c.PostForm("token"), SuperSecretPassword)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"code":    -1,
+			"message": err.Error(),
+		})
+		return
+	}
+	userid := claims["userid"].(float64)
+	if c.DefaultPostForm("device", "") != claims["device"].(string) {
+		c.JSON(200, gin.H{
+			"code":    -1,
+			"message": "Device is wrong.",
+		})
+		return
+	}
+
+	existtoken, errtoken := services.CheckExistToken(int(userid), c.PostForm("token"))
+	if errtoken != nil {
+		c.JSON(200, gin.H{
+			"code":    -1,
+			"message": errtoken.Error(),
+		})
+		return
+	}
+	if existtoken == true {
+		deletetoken, errdeletetoken := services.DeleteToken(int(userid))
+		if errdeletetoken != nil {
+			c.JSON(200, gin.H{
+				"code":    -1,
+				"message": errtoken.Error(),
+			})
+			return
+		}
+		if deletetoken == true {
+			c.JSON(200, gin.H{
+				"code":    1,
+				"message": "Logout successful",
+			})
+			return
+		}
+	}
+
 }

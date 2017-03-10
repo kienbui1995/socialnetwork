@@ -51,3 +51,51 @@ func SaveToken(userid int, token string) (bool, error) {
 	}
 	return true, nil
 }
+
+// CheckExistToken func to check exist token in DB
+func CheckExistToken(userid int, token string) (bool, error) {
+	//check exist token
+	stmt := `
+	MATCH (u:User) WHERE u.userId = {userid} RETURN u.Token
+	`
+	params := neoism.Props{"userid": userid}
+
+	res := []struct {
+		Token string `json:"u.Token"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+	if len(res) == 0 {
+		return false, errors.New("No exist token!")
+	}
+	if res[0].Token != token {
+		return false, errors.New("Wrong token!")
+	}
+	return true, nil
+}
+
+//DeleteToken func to delete token of user
+func DeleteToken(userid int) (bool, error) {
+	stmt := `
+	MATCH (u:User) WHERE u.userId = {userid} REMOVE u.Token
+	`
+	params := neoism.Props{"userid": userid}
+
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+	}
+
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}

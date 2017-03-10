@@ -2,9 +2,12 @@ package models
 
 // Post struct to include info of Post
 type Post struct {
-	ID       int64  `form:"id" json:"id" binding:"required"` //Id
-	Content  string `form:"username" json:"username" binding:"username"`
-	Type     string `form:"password" json:"password" binding:"password"`
-	Status   string `form:"email" json:"email" binding:"email"`
-	IsHidden bool   `form:"is_hidden" json:"is_hidden" binding:"is_hidden"`
+	PostID       int    `form:"id" json:"id" binding:"required"` //Id
+	Message      string `form:"message" json:"message" binding:"message"`
+	Type         string `form:"password" json:"password" binding:"password"`
+	Status       int    `form:"status" json:"status" binding:"status"`
+	IsHidden     bool   `form:"ishidden" json:"ishidden" binding:"ishidden"`
+	UpdatedTime  string `form:"updatedtime" json:"updatedtime" binding:"updatedtime"`
+	CreatedTime  string `form:"createtime" json:"createtime" binding:"createtime"`
+	CreateUserID int    `form:"createuserid" json:"createuserid" binding:"createuserid"`
 }
