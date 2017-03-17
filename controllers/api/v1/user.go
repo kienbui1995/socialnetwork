@@ -10,6 +10,22 @@ import (
 
 // GetUser func  return info user
 func GetUser(c *gin.Context) {
+	if c.Param("userid") == "" {
+		listuser, errlist := services.GetAllUser()
+		if errlist != nil {
+			c.JSON(200, gin.H{
+				"code":    -1,
+				"message": errlist.Error(),
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"code":    1,
+				"message": "list user",
+				"data":    listuser,
+			})
+
+		}
+	}
 	userid, err := strconv.Atoi(c.Param("userid"))
 	if err != nil {
 		c.JSON(200, gin.H{
@@ -18,7 +34,7 @@ func GetUser(c *gin.Context) {
 		})
 	} else {
 		var errUser error
-		user := models.User{}
+		var user models.User
 		// user.UserID = userid
 		user, errUser = services.GetUser(userid)
 		if errUser != nil {

@@ -5,7 +5,7 @@ import "github.com/jmcvetta/neoism"
 //neo := connector.Neoism{IP:"155.94.144.150", Port: 7474, User: "neo4j", Password: "tlis2016", Type: "http"}
 
 // URLDB CONST
-const URLDB = "http://neo4j:tlse2016@155.94.144.150:7474/db/data/"
+const URLDB = "http://neo4j:madawg00@localhost:7474/db/data/"
 
 var conn, _ = neoism.Connect(URLDB)
 

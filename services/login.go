@@ -10,12 +10,12 @@ import (
 // Login func to user login system
 func Login(login models.Login) (int, error) {
 	stmt := `
-	MATCH (u:User) WHERE u.Username = {username} and u.Password = {password} return u.userId
+	MATCH (u:User) WHERE u.Username	 = {username} and u.Password = {password} return ID(u)
 	`
 	params := neoism.Props{"username": login.Username, "password": login.Password}
 
 	res := []struct {
-		UserID int `json:"u.userId"`
+		UserID int `json:"ID(u)"`
 	}{}
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
@@ -28,7 +28,7 @@ func Login(login models.Login) (int, error) {
 		return -1, err
 	}
 	if len(res) == 0 {
-		return -1, errors.New("No exist user!")
+		return -1, errors.New("No exist user")
 	}
 	return res[0].UserID, nil
 }
@@ -36,7 +36,7 @@ func Login(login models.Login) (int, error) {
 // SaveToken func t insert token to db
 func SaveToken(userid int, token string) (bool, error) {
 	stmt := `
-	MATCH (u:User) WHERE u.userId = {userid} SET u.Token = {token}
+	MATCH (u:User) WHERE ID(u) = {userid} SET u.Token = {token}
 	`
 	params := neoism.Props{"userid": userid, "token": token}
 
@@ -56,7 +56,7 @@ func SaveToken(userid int, token string) (bool, error) {
 func CheckExistToken(userid int, token string) (bool, error) {
 	//check exist token
 	stmt := `
-	MATCH (u:User) WHERE u.userId = {userid} RETURN u.Token
+	MATCH (u:User) WHERE ID(u) = {userid} RETURN u.Token
 	`
 	params := neoism.Props{"userid": userid}
 
@@ -73,10 +73,10 @@ func CheckExistToken(userid int, token string) (bool, error) {
 		return false, err
 	}
 	if len(res) == 0 {
-		return false, errors.New("No exist token!")
+		return false, errors.New("No exist token")
 	}
 	if res[0].Token != token {
-		return false, errors.New("Wrong token!")
+		return false, errors.New("Wrong token")
 	}
 	return true, nil
 }
@@ -84,7 +84,7 @@ func CheckExistToken(userid int, token string) (bool, error) {
 //DeleteToken func to delete token of user
 func DeleteToken(userid int) (bool, error) {
 	stmt := `
-	MATCH (u:User) WHERE u.userId = {userid} REMOVE u.Token
+	MATCH (u:User) WHERE ID(u) = {userid} REMOVE u.Token
 	`
 	params := neoism.Props{"userid": userid}
 
