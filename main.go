@@ -29,7 +29,7 @@ func main() {
 
 		// user with post
 		RUser.POST("/:userid/post", apiv1.CreatePost)           // user create a post
-		RUser.GET("/:userid/post", apiv1.GetPost)               // get post of userid
+		RUser.GET("/:userid/post", apiv1.GetPost)               // get post of this post
 		RUser.GET("/:userid/post/:postid", apiv1.GetPost)       // user get a own post
 		RUser.PUT("/:userid/post/:postid", apiv1.UpdatePost)    // user update a own post
 		RUser.DELETE("/:userid/post/:postid", apiv1.DeletePost) // user delete a own post
@@ -39,14 +39,14 @@ func main() {
 	}
 
 	// Work for Post
-	// RPost := router.Group("/post")
-	// {
-	// 	RPost.GET("", apiv1.GetPost)              // get a few post
-	// 	RPost.GET("/:postid", apiv1.GetPost)      // get a post
-	// 	RPost.PUT("/:postid", apiv1.UpdatePost)   // update a post
-	// 	RPost.POST("", apiv1.CreatePost)          // create a post
-	// 	RPost.DELETE(":postid", apiv1.DeletePost) // delete a post
-	// }
+	RPost := router.Group("/post")
+	{
+		RPost.GET("", apiv1.GetPost)              // get a few post
+		RPost.GET("/:postid", apiv1.GetPost)      // get a post
+		RPost.PUT("/:postid", apiv1.UpdatePost)   // update a post
+		RPost.POST("", apiv1.CreatePost)          // create a post
+		RPost.DELETE(":postid", apiv1.DeletePost) // delete a post
+	}
 
 	router.Run(":8080")
 

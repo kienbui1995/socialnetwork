@@ -36,7 +36,7 @@ func AuthHandler(c *gin.Context) {
 	if ok == false {
 		c.JSON(200, gin.H{
 			"code":    -1,
-			"message": "Token invalid!",
+			"message": "Token invalid",
 		})
 		c.Abort()
 		return
@@ -62,7 +62,7 @@ func AuthHandler(c *gin.Context) {
 	if existtoken != true {
 		c.JSON(200, gin.H{
 			"code":    -1,
-			"message": "No exist token.",
+			"message": "No exist token",
 		})
 		c.Abort()
 		return

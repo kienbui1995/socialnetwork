@@ -12,12 +12,14 @@ var SuperSecretPassword = []byte("socialnetworkTLSEN")
 
 // Login func is controller login
 func Login(c *gin.Context) {
-
+	var json models.Login
+	err := c.Bind(&json)
+	if err != nil {
+		c.Abort()
+		return
+	}
 	defaultvalue := ""
-	username := c.DefaultPostForm("username", defaultvalue)
-	password := c.DefaultPostForm("password", defaultvalue)
-	device := c.DefaultPostForm("device", defaultvalue)
-	if username == defaultvalue || password == defaultvalue || device == defaultvalue {
+	if json.Username == defaultvalue || json.Password == defaultvalue || json.Device == defaultvalue {
 		c.JSON(200, gin.H{
 			"code":    -1,
 			"message": "Missing a few parameters",
@@ -25,7 +27,7 @@ func Login(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	id, err := services.Login(models.Login{Username: username, Password: password})
+	id, err := services.Login(json)
 
 	if err != nil {
 		c.JSON(200, gin.H{
@@ -36,7 +38,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	tokenstring, errtoken := middlewares.GenerateToken(id, device, SuperSecretPassword)
+	tokenstring, errtoken := middlewares.GenerateToken(id, json.Device, SuperSecretPassword)
 	if errtoken != nil {
 		c.JSON(200, gin.H{
 			"code":    -1,
@@ -60,8 +62,16 @@ func Login(c *gin.Context) {
 
 // Logout func to remove token of user
 func Logout(c *gin.Context) {
+	var json struct{ Token string }
+	err := c.Bind(&json)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"code":    -1,
+			"message": err.Error(),
+		})
+	}
 	// delete token from DB
-	claims, err := middlewares.ExtractClaims(c.PostForm("token"), SuperSecretPassword)
+	claims, err := middlewares.ExtractClaims(json.Token, SuperSecretPassword)
 	if err != nil {
 		c.JSON(200, gin.H{
 			"code":    -1,
