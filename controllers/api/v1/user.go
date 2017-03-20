@@ -23,7 +23,7 @@ func GetUser(c *gin.Context) {
 				"message": "list user",
 				"data":    listuser,
 			})
-
+			return
 		}
 	}
 	userid, err := strconv.Atoi(c.Param("userid"))
@@ -57,24 +57,21 @@ func GetUser(c *gin.Context) {
 func CreateUser(c *gin.Context) {
 	var user = models.User{}
 	var errUser error
-	userid, _ := strconv.Atoi(c.DefaultPostForm("userid", "-1"))
-	username := c.DefaultPostForm("username", "")
-	password := c.DefaultPostForm("password", "")
-	email := c.DefaultPostForm("email", "")
-	if username != "" && password != "" && email != "" && userid != -1 {
-		user.UserID = int(userid)
-		user.Username = username
-		user.Password = password
-		user.Email = email
-		user.Status = 0
-	} else {
+	var json map[string]interface{}
+
+	if c.Bind(&json) != nil {
 		c.JSON(200, gin.H{
 			"code":    -1,
-			"message": "Missing a few post value",
+			"message": c.Bind(&json).Error(),
 		})
 		return
 	}
-	user.UserID, errUser = services.CreateUser(user)
+	user.Data = make(map[string]interface{})
+	for k, v := range json {
+		user.Data[k] = v
+	}
+
+	user, errUser = services.CreateUser(user)
 	if errUser != nil {
 		c.JSON(200, gin.H{
 			"code": -1,
@@ -85,24 +82,20 @@ func CreateUser(c *gin.Context) {
 		return
 
 	}
+
 	c.JSON(200, gin.H{
 		"code":    1,
 		"message": "Create user successful!",
-		"data":    user,
+		"data":    user.Data,
 	})
 
 }
 
 // UpdateUser func to update info a User
 func UpdateUser(c *gin.Context) {
-	var (
-		err    error
-		userid int
-		email  string
-		status int
-		update bool
-	)
-	userid, err = strconv.Atoi(c.Param("userid"))
+	var update bool
+
+	userid, err := strconv.Atoi(c.Param("userid"))
 	if err != nil {
 		c.JSON(200, gin.H{
 			"code":    -1,
@@ -110,19 +103,21 @@ func UpdateUser(c *gin.Context) {
 		})
 		return
 	}
-	email = c.PostForm("email")
-	status, err = strconv.Atoi(c.PostForm("status"))
-	if err != nil {
+	var jsonUser map[string]interface{}
+
+	if c.Bind(&jsonUser) != nil {
 		c.JSON(200, gin.H{
 			"code":    -1,
 			"message": err.Error(),
 		})
 		return
 	}
-	user := models.User{}
-	user.UserID = userid
-	user.Email = email
-	user.Status = status
+	var user models.User
+	user.Data = make(map[string]interface{})
+	user.Data["userid"] = userid
+	for k, v := range jsonUser {
+		user.Data[k] = v
+	}
 	update, err = services.UpdateUser(user)
 	if err != nil {
 		c.JSON(200, gin.H{
@@ -133,7 +128,9 @@ func UpdateUser(c *gin.Context) {
 	}
 	if update == true {
 		c.JSON(200, gin.H{
-			"userid": user.UserID,
+			"code":    1,
+			"message": "Update successful",
+			"userid":  user.Data["userid"],
 		})
 	} else {
 		c.JSON(200, gin.H{

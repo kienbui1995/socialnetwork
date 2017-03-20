@@ -11,10 +11,7 @@ import (
 // AuthHandler func to check user
 func AuthHandler(c *gin.Context) {
 	token := c.Request.Header.Get("token")
-	//fmt.Printf("\n%s, %d\n", token, len(token))
-	if len(token) == 0 {
-		token = c.Query("token")
-	}
+
 	if len(token) == 0 {
 		err := errors.New("No token")
 		c.JSON(200, gin.H{

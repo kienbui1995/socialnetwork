@@ -27,6 +27,7 @@ func Login(login models.Login) (int, error) {
 	if err != nil {
 		return -1, err
 	}
+
 	if len(res) == 0 {
 		return -1, errors.New("No exist user")
 	}

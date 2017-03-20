@@ -10,6 +10,11 @@ import (
 	"github.com/kienbui1995/socialnetwork/services"
 )
 
+// GetAllPost func return all post for follower
+func GetAllPost(c *gin.Context) {
+
+}
+
 // GetPost func  return info Post
 func GetPost(c *gin.Context) {
 	userid, erruid := strconv.Atoi(c.Param("userid"))
@@ -38,12 +43,9 @@ func GetPost(c *gin.Context) {
 
 // CreatePost func to create a new post
 func CreatePost(c *gin.Context) {
-	post := models.Post{}
-	post.Content = c.DefaultPostForm("content", "")
-	post.Image = c.DefaultPostForm("image", "")
-	post.Status = 1
-	post.CreatedTime = c.DefaultPostForm("createdtime", time.Now().String())
-	post.UpdatedTime = c.DefaultPostForm("updatedtime", time.Now().String())
+	var post models.Post
+	c.Bind(&post)
+
 	userid, errid := strconv.Atoi(c.Param("userid"))
 	if errid != nil {
 		c.JSON(200, gin.H{

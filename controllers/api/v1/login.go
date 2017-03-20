@@ -37,7 +37,15 @@ func Login(c *gin.Context) {
 		c.Abort()
 		return
 	}
-
+	user, erruser := services.GetUser(id)
+	if erruser != nil {
+		c.JSON(200, gin.H{
+			"code":    -1,
+			"message": err.Error(),
+		})
+		c.Abort()
+		return
+	}
 	tokenstring, errtoken := middlewares.GenerateToken(id, json.Device, SuperSecretPassword)
 	if errtoken != nil {
 		c.JSON(200, gin.H{
@@ -49,14 +57,16 @@ func Login(c *gin.Context) {
 	services.SaveToken(id, tokenstring)
 	//c.Header("token", tokenstring)
 	//tokenstruct truct
-	type TokenStruct struct {
-		Token string `json:"token"`
+	type dataStruct struct {
+		Token string                 `json:"token"`
+		User  map[string]interface{} `json:"user"`
 	}
-	token1 := TokenStruct{Token: tokenstring}
+	data := dataStruct{Token: tokenstring, User: user.Data}
+
 	c.JSON(200, gin.H{
 		"code":    1,
 		"message": "Login successful!",
-		"data":    token1,
+		"data":    data,
 	})
 }
 
