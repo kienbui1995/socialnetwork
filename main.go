@@ -12,8 +12,9 @@ var (
 func main() {
 	router := gin.Default()
 	// Work for login
-	router.POST("/login", apiv1.Login)   // login method
-	router.POST("/logout", apiv1.Logout) // logout method
+	router.POST("/login", apiv1.Login)     // login method
+	router.POST("/logout", apiv1.Logout)   // logout method
+	router.POST("/user", apiv1.CreateUser) // create a user
 	// Work for User
 	RUser := router.Group("/user", apiv1.AuthHandler)
 	{
@@ -21,10 +22,10 @@ func main() {
 		// RUser.Use(apiv1.AuthHandler)
 
 		// user
-		RUser.GET("", apiv1.GetUser)               // get a few user
-		RUser.GET("/:userid", apiv1.GetUser)       // get a user
-		RUser.PUT("/:userid", apiv1.UpdateUser)    // update a user
-		RUser.POST("", apiv1.CreateUser)           // create a user
+		RUser.GET("", apiv1.GetUser)            // get a few user
+		RUser.GET("/:userid", apiv1.GetUser)    // get a user
+		RUser.PUT("/:userid", apiv1.UpdateUser) // update a user
+
 		RUser.DELETE("/:userid", apiv1.DeleteUser) // delete a user
 
 		// user with post
