@@ -12,9 +12,36 @@ import (
 // CreateUser func
 func CreateUser(user models.User) (models.User, error) {
 	stmt := `
-	Create (u:User{Username:{username}, Password:{password}, Email:{email},Avatar:{avatar}, Status:1 }) return u as user
+	Create (u:User{
+		Username: {username},
+		Password: {password},
+		Firstname: {firstname},
+		Lastname: {lastname},
+		Fullname: {fullname},
+		Gender: {gender},
+		Birthday: {birthday},
+		FacebookId: {facebookid},
+		FacebookToken: {facebooktoken},
+		Email: {email},
+		Avatar: {avatar},
+		Status: {status}
+		})
+	return u as user
 	`
-	params := neoism.Props{"username": user.Data["username"], "password": user.Data["password"], "email": user.Data["email"], "avatar": user.Data["avatar"]}
+	params := neoism.Props{
+		"username":      user.Data["username"],
+		"password":      user.Data["password"],
+		"firstname":     user.Data["firstname"],
+		"lastname":      user.Data["lastname"],
+		"fullname":      user.Data["fullname"],
+		"birthday":      user.Data["birthday"],
+		"gender":        user.Data["gender"],
+		"facebookid":    user.Data["facebookid"],
+		"facebooktoken": user.Data["facebooktoken"],
+		"email":         user.Data["email"],
+		"avatar":        user.Data["avatar"],
+		"status":        user.Data["status"],
+	}
 	res := []map[string]map[string]map[string]interface{}{}
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
