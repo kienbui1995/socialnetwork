@@ -1,0 +1,58 @@
+package libs
+
+import "github.com/gin-gonic/gin"
+
+//ResponseJSON func
+func ResponseJSON(c *gin.Context, status int, code int, message string, data interface{}) {
+
+	if status < 200 || status >= 300 {
+		c.JSON(status, gin.H{
+			"code":    code,
+			"message": message,
+		})
+	} else {
+		c.JSON(status, gin.H{
+			"code":    code,
+			"data":    data,
+			"message": message,
+		})
+	}
+}
+
+//ResponseSuccessJSON func
+func ResponseSuccessJSON(c *gin.Context, code int, message string, data interface{}) {
+	c.JSON(200, gin.H{
+		"code":    code,
+		"data":    data,
+		"message": message,
+	})
+}
+
+//ResponseEntityListJSON func
+func ResponseEntityListJSON(c *gin.Context, code int, message string, entityList interface{}, paging interface{}, total int) {
+	c.JSON(200, gin.H{
+		"code":    1,
+		"data":    entityList,
+		"total":   total,
+		"paging":  paging,
+		"message": message,
+	})
+}
+
+//ResponseCreatedJSON func
+func ResponseCreatedJSON(c *gin.Context, code int, message string, data interface{}) {
+	c.JSON(201, gin.H{
+		"code":    code,
+		"data":    data,
+		"message": message,
+	})
+}
+
+//ResponseAuthJSON func
+func ResponseAuthJSON(c *gin.Context, code int, message string) {
+	c.JSON(401, gin.H{
+		"code":    code,
+		"message": message,
+	})
+	c.Abort()
+}

@@ -3,46 +3,66 @@ package services
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/jmcvetta/neoism"
 	"github.com/kienbui1995/socialnetwork/models"
 )
 
 // CreateUser func
-func CreateUser(user models.User) (models.User, error) {
+func CreateUser(user models.User) (int, error) {
 	stmt := `
 	Create (u:User{
-		Username: {username},
-		Password: {password},
-		Firstname: {firstname},
-		Lastname: {lastname},
-		Fullname: {fullname},
-		Gender: {gender},
-		Birthday: {birthday},
-		FacebookId: {facebookid},
-		FacebookToken: {facebooktoken},
-		Email: {email},
-		Avatar: {avatar},
-		Status: {status}
+		username: {username},
+		password: {password},
+		email: {email},
+		first_name: {firstname},
+		middle_name: {middlename},
+		last_name: {lastname},
+		full_name: {fullname},
+		about: {about},
+		gender: {gender},
+		birthday: {birthday},
+		avatar: {avatar},
+		cover: {cover},
+		status: {status},
+		is_vertified: {isvertified},
+		updated_at: {updatedat},
+		created_at: {createdat},
+		facebook_id: {facebookid},
+		facebook_token: {facebooktoken},
+		posts: {posts},
+		followers: {followers},
+		followings: {followings}
 		})
-	return u as user
+	return ID(u) as ID
 	`
 	params := neoism.Props{
-		"username":      user.Data["username"],
-		"password":      user.Data["password"],
-		"firstname":     user.Data["firstname"],
-		"lastname":      user.Data["lastname"],
-		"fullname":      user.Data["fullname"],
-		"birthday":      user.Data["birthday"],
-		"gender":        user.Data["gender"],
-		"facebookid":    user.Data["facebookid"],
-		"facebooktoken": user.Data["facebooktoken"],
-		"email":         user.Data["email"],
-		"avatar":        user.Data["avatar"],
-		"status":        user.Data["status"],
+		"username":      user.Username,
+		"password":      user.Password,
+		"email":         user.Email,
+		"firstname":     user.FirstName,
+		"middlename":    user.MiddleName,
+		"lastname":      user.LastName,
+		"fullname":      user.FullName,
+		"about":         user.About,
+		"gender":        user.Gender,
+		"birthday":      user.Birthday,
+		"avatar":        user.Avatar,
+		"cover":         user.Cover,
+		"status":        user.Status,
+		"isvertified":   user.IsVertified,
+		"updatedat":     user.UpdatedAt,
+		"createdat":     user.CreatedAt,
+		"facebookid":    user.FacebookID,
+		"facebooktoken": user.FacebookToken,
+		"posts":         user.Posts,
+		"followers":     user.Followers,
+		"followings":    user.Followings,
 	}
-	res := []map[string]map[string]map[string]interface{}{}
+	type resStruct struct {
+		ID int `json:"ID"`
+	}
+	res := []resStruct{}
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
 		Parameters: params,
@@ -50,36 +70,18 @@ func CreateUser(user models.User) (models.User, error) {
 	}
 	err := conn.Cypher(&cq)
 	if err == nil {
-		var userreturn models.User
-		userreturn.Data = make(map[string]interface{})
-		for k, v := range res[0]["user"] {
-			if v != nil {
-				if k == "data" || k == "metadata" {
-					for k1, v1 := range v {
-						if k1 != "labels" {
-							if k1 == "id" {
-								k1 = "userid"
-							}
-							userreturn.Data[strings.ToLower(k1)] = v1
-						}
-					}
-
-				}
-			}
-		}
-
-		return userreturn, nil
+		return res[0].ID, nil
 	}
-	return user, err
+	return 0, err
 }
 
 // GetAllUser func
-func GetAllUser() ([]map[string]interface{}, error) {
-	user := models.User{}
+func GetAllUser() ([]models.User, error) {
+
 	stmt := `
-	MATCH (u:User) RETURN ID(u) as userid, u.Username as username, u.Password as password, u.Email as email, u.Status as status, u.Avatar as avatar LIMIT 25;
+	MATCH (u:User) RETURN ID(u) as UserID, u.Username as Username, u.Password as Password, u.Email as Email, u.Status as Status, u.Avatar as Avatar LIMIT 25;
 	`
-	res := []map[string]interface{}{}
+	res := []models.User{}
 	cq := neoism.CypherQuery{
 		Statement: stmt,
 
@@ -94,29 +96,44 @@ func GetAllUser() ([]map[string]interface{}, error) {
 	if k < 1 {
 		return nil, errors.New("No User")
 	}
-	var listuser []map[string]interface{}
 
-	for i := range res {
-		user.Data = make(map[string]interface{})
-		for k, v := range res[i] {
-			if v != nil {
-				user.Data[k] = v
-			}
-		}
-		listuser = append(listuser, user.Data)
+	return res, nil
+}
+
+// GetAllUserWithSkipLimit func
+func GetAllUserWithSkipLimit(skip int, limit int) ([]models.User, error) {
+
+	stmt := fmt.Sprintf("MATCH (u:User) RETURN ID(u) as UserID, u.Username as Username, u.Password as Password, u.Email as Email, u.Status as Status, u.Avatar as Avatar SKIP %v LIMIT %v",
+		skip, limit)
+
+	res := []models.User{}
+	cq := neoism.CypherQuery{
+		Statement: stmt,
+
+		Result: &res,
 	}
-	return listuser, nil
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return nil, err
+	}
+	k := int(len(res))
+
+	if k < 1 {
+		return nil, errors.New("No User")
+	}
+
+	return res, nil
 }
 
 // GetUser func
 func GetUser(userid int) (models.User, error) {
 	var user = models.User{}
 	stmt := `
-	MATCH (u:User) WHERE ID(u) = {userId} RETURN u.Avatar as avatar, ID(u) as userid, u.Username as username, u.Password as password, u.Email as email, u.Status as status LIMIT 25;
+	MATCH (u:User) WHERE ID(u) = {userId} RETURN u.Avatar as Avatar, ID(u) as UserID, u.Username as Username, u.Password as Password, u.Email as email, u.Status as Status LIMIT 25;
 	`
 	params := neoism.Props{"userId": userid}
 
-	res := []map[string]interface{}{}
+	res := []models.User{}
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
 		Parameters: params,
@@ -128,14 +145,8 @@ func GetUser(userid int) (models.User, error) {
 		return user, err
 	}
 	if len(res) == 1 {
-		user.Data = make(map[string]interface{})
-		for k, v := range res[0] {
-			if v != nil {
-				user.Data[k] = v
-			}
-		}
 
-		return user, nil
+		return res[0], nil
 	} else if len(res) > 1 {
 		return user, errors.New("Many User")
 	} else {
@@ -149,7 +160,7 @@ func UpdateUser(user models.User) (bool, error) {
 	stmt := `
 	MATCH (u:User) WHERE ID(u) = {userid} SET u.Email = {email}, u.Status = {status},  u.Avatar = {avatar}, u.Password = {password};
 	`
-	params := neoism.Props{"userid": user.Data["userid"], "email": user.Data["email"], "status": user.Data["status"], "avatar": user.Data["avatar"], "password": user.Data["password"]}
+	params := neoism.Props{"userid": user.UserID, "email": user.Email, "status": user.Status, "avatar": user.Avatar, "password": user.Password}
 	res := false
 	cq := neoism.CypherQuery{
 		Statement:  stmt,

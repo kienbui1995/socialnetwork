@@ -12,15 +12,12 @@ var (
 func main() {
 	router := gin.Default()
 	// Work for login
-	router.POST("/login", apiv1.Login)       // login method
-	router.POST("/logout", apiv1.Logout)     // logout method
-	router.POST("/signup", apiv1.CreateUser) // create a user
+	router.POST("/login", apiv1.Login)        // login method
+	router.POST("/logout", apiv1.Logout)      // logout method
+	router.POST("/sign_up", apiv1.CreateUser) // create a user
 	// Work for User
-	RUser := router.Group("/user", apiv1.AuthHandler)
+	RUser := router.Group("/users", apiv1.AuthHandler)
 	{
-		// //Check token in Header
-		// RUser.Use(apiv1.AuthHandler)
-
 		// user
 		RUser.GET("", apiv1.GetUser)            // get a few user
 		RUser.GET("/:userid", apiv1.GetUser)    // get a user

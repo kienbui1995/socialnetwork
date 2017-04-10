@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/kienbui1995/socialnetwork/libs"
 	"github.com/kienbui1995/socialnetwork/middlewares"
 	"github.com/kienbui1995/socialnetwork/models"
 	"github.com/kienbui1995/socialnetwork/services"
@@ -30,10 +31,11 @@ func Login(c *gin.Context) {
 	id, err := services.Login(json)
 
 	if err != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
+		libs.ResponseJSON(c, 401, 1, err.Error(), nil)
+		// c.JSON(200, gin.H{
+		// 	"code":    -1,
+		// 	"message": err.Error(),
+		// })
 		c.Abort()
 		return
 	}
@@ -45,29 +47,14 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
-	services.SaveToken(id, tokenstring)
-	user, erruser := services.GetUser(id)
-	if erruser != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
-		c.Abort()
-		return
-	}
-	//c.Header("token", tokenstring)
-	//tokenstruct truct
-	type dataStruct struct {
-		Token string                 `json:"token"`
-		User  map[string]interface{} `json:"user"`
-	}
-	data := dataStruct{Token: tokenstring, User: user.Data}
-
-	c.JSON(200, gin.H{
-		"code":    1,
-		"message": "Login successful!",
-		"data":    data,
-	})
+	go services.SaveToken(id, tokenstring)
+	token := map[string]string{"token": tokenstring}
+	libs.ResponseSuccessJSON(c, 1, "Login successful!", token)
+	// c.JSON(200, gin.H{
+	// 	"code":    1,
+	// 	"message": "Login successful!",
+	// 	"data":    token,
+	// })
 }
 
 // Logout func to remove token of user

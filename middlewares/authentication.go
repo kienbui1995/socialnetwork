@@ -61,5 +61,5 @@ func ExtractClaims(tokenStr string, secret []byte) (jwt.MapClaims, error) {
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return claims, nil
 	}
-	return nil, errors.New("Don't extract claim!")
+	return nil, errors.New("Don't extract claim")
 }
