@@ -10,7 +10,7 @@ import (
 // Login func to user login system
 func Login(login models.Login) (int, error) {
 	stmt := `
-	MATCH (u:User) WHERE u.Username	 = {username} and u.Password = {password} return ID(u)
+	MATCH (u:User) WHERE u.username	 = {username} and u.password = {password} return ID(u)
 	`
 	params := neoism.Props{"username": login.Username, "password": login.Password}
 
@@ -35,11 +35,12 @@ func Login(login models.Login) (int, error) {
 }
 
 // SaveToken func t insert token to db
-func SaveToken(userid int, token string) (bool, error) {
+func SaveToken(userid int, device string, token string) (bool, error) {
 	stmt := `
-	MATCH (u:User) WHERE ID(u) = {userid} SET u.Token = {token}
-	`
-	params := neoism.Props{"userid": userid, "token": token}
+	MATCH (u:User) WHERE ID(u) = {userid}
+		MERGE (u)-[:LOGGED_IN]->(d:Device {device:{device}}) SET d.token = {token}
+	` // chua test
+	params := neoism.Props{"userid": userid, "token": token, "device": device}
 
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
@@ -57,12 +58,12 @@ func SaveToken(userid int, token string) (bool, error) {
 func CheckExistToken(userid int, token string) (bool, error) {
 	//check exist token
 	stmt := `
-	MATCH (u:User) WHERE ID(u) = {userid} RETURN u.Token
+	 MATCH (u:User) WHERE ID(u) = {userid} return exists( ((u)-[:LOGGED_IN]->(:Device{ token:{token}})) ) as existToken
 	`
-	params := neoism.Props{"userid": userid}
+	params := neoism.Props{"userid": userid, "token": token}
 
 	res := []struct {
-		Token string `json:"u.Token"`
+		ExistToken bool `json:"existToken"`
 	}{}
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
@@ -74,20 +75,20 @@ func CheckExistToken(userid int, token string) (bool, error) {
 		return false, err
 	}
 	if len(res) == 0 {
-		return false, errors.New("No exist token")
+		return false, errors.New("Error, can't check token on DB")
 	}
-	if res[0].Token != token {
+	if res[0].ExistToken != true {
 		return false, errors.New("Wrong token")
 	}
 	return true, nil
 }
 
 //DeleteToken func to delete token of user
-func DeleteToken(userid int) (bool, error) {
+func DeleteToken(userid int, token string) (bool, error) {
 	stmt := `
-	MATCH (u:User) WHERE ID(u) = {userid} REMOVE u.Token
+	MATCH (u:User) WHERE ID(u) = {userid} MATCH ((u)-[:LOGGED_IN]->(d)) WHERE d.token = {token} DETACH DELETE d
 	`
-	params := neoism.Props{"userid": userid}
+	params := neoism.Props{"userid": userid, "token": token}
 
 	cq := neoism.CypherQuery{
 		Statement:  stmt,

@@ -10,7 +10,7 @@ const URLDB = "http://neo4j:madawg00@localhost:7474/db/data/"
 var conn, _ = neoism.Connect(URLDB)
 
 // CheckExistNode func to return quantity of nodes
-func CheckExistNode(label string, where string) (int, error) {
+func CheckExistNode(label string, where string) (bool, error) {
 	stmt := `
 	MATCH (u:{label}) WHERE {where} RETURN COUNT(u);
 	`
@@ -23,7 +23,7 @@ func CheckExistNode(label string, where string) (int, error) {
 	}
 	err := conn.Cypher(&cq)
 	if err != nil {
-		return 0, err
+		return false, err
 	}
-	return res, nil
+	return true, nil
 }

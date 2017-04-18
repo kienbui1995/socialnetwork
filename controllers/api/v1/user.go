@@ -1,8 +1,10 @@
 package v1
 
 import (
+	"fmt"
 	"strconv"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"github.com/kienbui1995/socialnetwork/libs"
@@ -17,28 +19,39 @@ func GetUser(c *gin.Context) {
 		start, _ := strconv.Atoi(c.Query("start"))
 		var listuser []models.User
 		var errlist error
-		if limit != 0 && start != 0 {
+		type Paging struct {
+			NextStart     int `json:"next_start"`
+			PreviousStart int `json:"previous_start"`
+		}
+		var paging Paging
+		var next, previous int
+		if limit != 0 || start != 0 {
+			if limit == 0 {
+				limit = 25
+			}
 			listuser, errlist = services.GetAllUserWithSkipLimit(start, limit)
+			next = start + len(listuser)
+			if start-len(listuser) >= 0 {
+				previous = start - len(listuser)
+			} else {
+				previous = 0
+			}
 		} else {
 			listuser, errlist = services.GetAllUser()
+			next = len(listuser)
+			previous = 0
 		}
+		paging = Paging{next, previous}
 		if errlist != nil {
 			libs.ResponseJSON(c, 200, -1, errlist.Error(), nil)
-			// c.JSON(200, gin.H{
-			// 	"code":    -1,
-			// 	"message": errlist.Error(),
-			// })
 		} else {
-			libs.ResponseEntityListJSON(c, 1, "list user", listuser, nil, len(listuser))
+			libs.ResponseEntityListJSON(c, 1, "list user", listuser, paging, len(listuser))
 			return
 		}
 	} else {
 		userid, err := strconv.Atoi(c.Param("userid"))
 		if err != nil {
-			c.JSON(200, gin.H{
-				"code":    -1,
-				"message": err.Error(),
-			})
+			libs.ResponseBadRequestJSON(c, -1, err.Error())
 		} else {
 			var errUser error
 			var user models.User
@@ -46,19 +59,54 @@ func GetUser(c *gin.Context) {
 			// user.UserID = userid
 			user, errUser = services.GetUser(userid)
 			if errUser != nil {
-				c.JSON(200, gin.H{
-					"code":    -1,
-					"message": errUser.Error(),
-				})
+				libs.ResponseNotFoundJSON(c, -1, errUser.Error())
 			} else {
-				c.JSON(200, gin.H{
-					"code":    1,
-					"message": "info a user",
-					"data":    user,
-				})
+				libs.ResponseSuccessJSON(c, 1, "info a user", user)
 			}
 		}
 	}
+}
+
+// SignUp func stead of CreateUser func but  active  = 0 and has email Active
+func SignUp(c *gin.Context) {
+	var user = models.User{}
+	var errUser error
+	//var json interface{}
+
+	errBind := c.BindJSON(&user)
+	if errBind != nil {
+		libs.ResponseBadRequestJSON(c, -1, errBind.Error())
+		return
+	}
+
+	errorDetails := []libs.ErrorDetail{}
+	if govalidator.IsByteLength(user.Username, 3, 15) == false {
+		errorDetails = append(errorDetails, libs.NewErrorDetail(1, govalidator.CamelCaseToUnderscore("UserName"), "Username is not valid"))
+	}
+	if govalidator.IsEmail(user.Email) == false {
+		errorDetails = append(errorDetails, libs.NewErrorDetail(2, "Email", "Email is not valid"))
+	}
+	if len(errorDetails) != 0 {
+		libs.ResponseErrorJSON(c, libs.Errors{Code: -1, Message: "Fail in sign up", ErrorDetails: errorDetails})
+		return
+	}
+	user.Status = 0
+	user.EmailActive = libs.RandStringBytes(6)
+	fmt.Printf("%v", user.EmailActive)
+	user.UserID, errUser = services.CreateUser(user)
+	if errUser != nil {
+		libs.ResponseJSON(c, 400, -1, errUser.Error(), nil)
+		return
+
+	}
+	sender := libs.NewSender("kien.laohac@gmail.com", "ytanyybkizzygqjk")
+	var email []string
+	email = append(email, user.Email)
+	linkActive := "<a href='localhost:8080/user/" + string(user.UserID) + "?email_active=" + user.EmailActive + "'>Active</a>"
+	go sender.SendMail(email, fmt.Sprintf("Active user %s on TLSEN", user.Username), fmt.Sprintf("Content-Type: text/html; charset=UTF-8\n\ncode: %s OR active via link: %s", user.EmailActive, linkActive))
+
+	libs.ResponseCreatedJSON(c, 1, "Create user successful!", user.UserID)
+
 }
 
 // CreateUser func to create a new user
@@ -69,38 +117,16 @@ func CreateUser(c *gin.Context) {
 
 	if c.Bind(&user) != nil {
 		libs.ResponseJSON(c, 400, -1, c.Bind(&user).Error(), nil)
-		// c.JSON(200, gin.H{
-		// 	"code":    -1,
-		// 	"message": c.Bind(&user).Error(),
-		// })
 		return
 	}
-	// errCopy := copier.Copy(&user, &json)
-	//fmt.Printf("\n%v", user)
-	// // fmt.Printf("\n%v", json)
-	// if errCopy != nil {
-	// 	libs.ResponseJSON(c, 200, -1, errCopy.Error(), nil)
-	// 	return
-	// }
 
 	user.UserID, errUser = services.CreateUser(user)
 	if errUser != nil {
 		libs.ResponseJSON(c, 400, -1, errUser.Error(), nil)
-		// c.JSON(200, gin.H{
-		// 	"code": -1,
-		// 	//"userid":  user.UserID,
-		// 	"message": errUser.Error(),
-		// 	//"message": "Created new user",
-		// })
 		return
 
 	}
 	libs.ResponseCreatedJSON(c, 1, "Create user successful!", user.UserID)
-	// c.JSON(200, gin.H{
-	// 	"code":    1,
-	// 	"message": "Create user successful!",
-	// 	"data":    user.UserID,
-	// })
 
 }
 

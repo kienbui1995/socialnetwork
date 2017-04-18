@@ -77,33 +77,13 @@ func CreateUser(user models.User) (int, error) {
 
 // GetAllUser func
 func GetAllUser() ([]models.User, error) {
-
-	stmt := `
-	MATCH (u:User) RETURN ID(u) as UserID, u.Username as Username, u.Password as Password, u.Email as Email, u.Status as Status, u.Avatar as Avatar LIMIT 25;
-	`
-	res := []models.User{}
-	cq := neoism.CypherQuery{
-		Statement: stmt,
-
-		Result: &res,
-	}
-	err := conn.Cypher(&cq)
-	if err != nil {
-		return nil, err
-	}
-	k := int(len(res))
-
-	if k < 1 {
-		return nil, errors.New("No User")
-	}
-
-	return res, nil
+	return GetAllUserWithSkipLimit(0, 25)
 }
 
 // GetAllUserWithSkipLimit func
 func GetAllUserWithSkipLimit(skip int, limit int) ([]models.User, error) {
 
-	stmt := fmt.Sprintf("MATCH (u:User) RETURN ID(u) as UserID, u.Username as Username, u.Password as Password, u.Email as Email, u.Status as Status, u.Avatar as Avatar SKIP %v LIMIT %v",
+	stmt := fmt.Sprintf("MATCH (u:User) RETURN ID(u) as ID, u.username as Username, u.password as Password, u.email as Email, u.status as Status, u.avatar as Avatar SKIP %v LIMIT %v",
 		skip, limit)
 
 	res := []models.User{}
@@ -129,7 +109,7 @@ func GetAllUserWithSkipLimit(skip int, limit int) ([]models.User, error) {
 func GetUser(userid int) (models.User, error) {
 	var user = models.User{}
 	stmt := `
-	MATCH (u:User) WHERE ID(u) = {userId} RETURN u.Avatar as Avatar, ID(u) as UserID, u.Username as Username, u.Password as Password, u.Email as email, u.Status as Status LIMIT 25;
+	MATCH (u:User) WHERE ID(u) = {userId} RETURN u.avatar as Avatar, ID(u) as ID, u.username as Username, u.password as Password, u.email as email, u.status as Status LIMIT 25;
 	`
 	params := neoism.Props{"userId": userid}
 
@@ -195,11 +175,24 @@ func DeleteUser(userid int) (int, error) {
 //CheckExistUser func to check exist User
 func CheckExistUser(userid int) (bool, error) {
 	where := fmt.Sprintf("ID(u) = %d", userid)
-	number, err := CheckExistNode("User", where)
+	existNode, err := CheckExistNode("User", where)
 	if err != nil {
 		return false, err
 	}
-	if number > 0 {
+	if existNode == true {
+		return true, nil
+	}
+	return false, nil
+}
+
+//CheckExistUserWithUsernameAndEmail func to check exist User
+func CheckExistUserWithUsernameAndEmail(username string, email string) (bool, error) {
+	where := fmt.Sprintf("u.username = %s, u.email = %s", username, email)
+	existNode, err := CheckExistNode("User", where)
+	if err != nil {
+		return false, err
+	}
+	if existNode == true {
 		return true, nil
 	}
 	return false, nil

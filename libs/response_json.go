@@ -28,6 +28,11 @@ func ResponseSuccessJSON(c *gin.Context, code int, message string, data interfac
 	})
 }
 
+//ResponseNoContentJSON func
+func ResponseNoContentJSON(c *gin.Context, code int, message string) {
+	c.Status(204)
+}
+
 //ResponseEntityListJSON func
 func ResponseEntityListJSON(c *gin.Context, code int, message string, entityList interface{}, paging interface{}, total int) {
 	c.JSON(200, gin.H{
@@ -54,5 +59,30 @@ func ResponseAuthJSON(c *gin.Context, code int, message string) {
 		"code":    code,
 		"message": message,
 	})
+	c.Abort()
+}
+
+//ResponseNotFoundJSON func
+func ResponseNotFoundJSON(c *gin.Context, code int, message string) {
+	c.JSON(404, gin.H{
+		"code":    code,
+		"message": message,
+	})
+}
+
+//ResponseBadRequestJSON func
+func ResponseBadRequestJSON(c *gin.Context, code int, message interface{}) {
+	c.JSON(400, gin.H{
+		"code":    code,
+		"message": message,
+	})
+	c.Abort()
+}
+
+//Response error API
+
+//ResponseErrorJSON func
+func ResponseErrorJSON(c *gin.Context, errors Errors) {
+	c.JSON(400, errors)
 	c.Abort()
 }

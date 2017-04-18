@@ -166,11 +166,11 @@ func DeletePost(postid int) (int, error) {
 //CheckExistPost func to check exist User
 func CheckExistPost(postid int) (bool, error) {
 	where := fmt.Sprintf("ID(p) = %d", postid)
-	number, err := CheckExistNode("Post", where)
+	existNode, err := CheckExistNode("Post", where)
 	if err != nil {
 		return false, err
 	}
-	if number > 0 {
+	if existNode == true {
 		return true, nil
 	}
 	return false, nil

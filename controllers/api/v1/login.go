@@ -21,94 +21,53 @@ func Login(c *gin.Context) {
 	}
 	defaultvalue := ""
 	if json.Username == defaultvalue || json.Password == defaultvalue || json.Device == defaultvalue {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": "Missing a few parameters",
-		})
+		libs.ResponseAuthJSON(c, -1, "Missing a few parameters")
 		c.Abort()
 		return
 	}
 	id, err := services.Login(json)
 
 	if err != nil {
-		libs.ResponseJSON(c, 401, 1, err.Error(), nil)
-		// c.JSON(200, gin.H{
-		// 	"code":    -1,
-		// 	"message": err.Error(),
-		// })
+		libs.ResponseAuthJSON(c, -1, err.Error())
 		c.Abort()
 		return
 	}
 	tokenstring, errtoken := middlewares.GenerateToken(id, json.Device, SuperSecretPassword)
 	if errtoken != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": errtoken.Error(),
-		})
+		libs.ResponseAuthJSON(c, -1, errtoken.Error())
 		return
 	}
-	go services.SaveToken(id, tokenstring)
+	go services.SaveToken(id, json.Device, tokenstring)
 	token := map[string]string{"token": tokenstring}
 	libs.ResponseSuccessJSON(c, 1, "Login successful!", token)
-	// c.JSON(200, gin.H{
-	// 	"code":    1,
-	// 	"message": "Login successful!",
-	// 	"data":    token,
-	// })
 }
 
 // Logout func to remove token of user
 func Logout(c *gin.Context) {
-	var json struct{ Token string }
-	err := c.Bind(&json)
-	if err != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
-	}
+
+	token := c.Request.Header.Get("token")
+
 	// delete token from DB
-	claims, err := middlewares.ExtractClaims(json.Token, SuperSecretPassword)
+	claims, err := middlewares.ExtractClaims(token, SuperSecretPassword)
 	if err != nil {
 		c.JSON(200, gin.H{
 			"code":    -1,
 			"message": err.Error(),
-		})
-		return
-	}
-	userid := claims["userid"].(float64)
-	if c.DefaultPostForm("device", "") != claims["device"].(string) {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": "Device is wrong.",
 		})
 		return
 	}
 
-	existtoken, errtoken := services.CheckExistToken(int(userid), c.PostForm("token"))
-	if errtoken != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": errtoken.Error(),
-		})
+	userid := claims["userid"].(float64)
+	existToken, errExistToken := services.CheckExistToken(int(userid), token)
+	if errExistToken != nil || existToken == false {
+		libs.ResponseAuthJSON(c, -1, errExistToken.Error())
 		return
 	}
-	if existtoken == true {
-		deletetoken, errdeletetoken := services.DeleteToken(int(userid))
-		if errdeletetoken != nil {
-			c.JSON(200, gin.H{
-				"code":    -1,
-				"message": errtoken.Error(),
-			})
-			return
-		}
-		if deletetoken == true {
-			c.JSON(200, gin.H{
-				"code":    1,
-				"message": "Logout successful",
-			})
-			return
-		}
+	deletetoken, errdelete := services.DeleteToken(int(userid), token)
+	if deletetoken != true || errdelete != nil {
+		libs.ResponseBadRequestJSON(c, -1, errdelete.Error())
+		return
 	}
+	libs.ResponseNoContentJSON(c, 1, "Logout successful")
 
 }
