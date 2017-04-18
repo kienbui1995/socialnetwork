@@ -87,7 +87,7 @@ func SignUp(c *gin.Context) {
 		errorDetails = append(errorDetails, libs.NewErrorDetail(385, "Please enter a valid email address."))
 	}
 	if len(errorDetails) != 0 {
-		libs.ResponseErrorJSON(c, libs.Errors{Code: 387, Message: "There was an error with your registration. Please try registering again."})
+		libs.ResponseErrorJSON(c, libs.Errors{Code: 387, Message: "There was an error with your registration. Please try registering again.", ErrorDetails: errorDetails})
 		return
 	}
 	user.Status = 0
