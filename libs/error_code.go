@@ -16,13 +16,12 @@ const (
 //ErrorDetail struct for a Error
 type ErrorDetail struct {
 	Code    int    `json:"code"`
-	Field   string `json:"field"`
 	Message string `json:"message"`
 }
 
 //NewErrorDetail func to create  and return a new ErrorDetail
-func NewErrorDetail(c int, f string, m string) ErrorDetail {
-	return ErrorDetail{Code: c, Field: f, Message: m}
+func NewErrorDetail(c int, m string) ErrorDetail {
+	return ErrorDetail{Code: c, Message: m}
 }
 
 //Errors struct include a or a few errors

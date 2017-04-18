@@ -16,7 +16,7 @@ type User struct {
 	Avatar        string `json:"avatar,omitempty"`       //Direct URL for the user's avatar image
 	Cover         string `json:"cover,omitempty"`        //Direct URL for the user's cover image
 	Status        int    `json:"status,omitempty"`       //1: Active; 0: DeActive
-	IsVertified   bool   `json:"is_vertified,omitempty"` //
+	IsVertified   bool   `json:"is_vertified,omitempty"` // true or false
 	UpdatedAt     string `json:"updated_at,omitempty"`
 	CreatedAt     string `json:"created_at,omitempty"`
 	FacebookID    string `json:"facebook_id,omitempty"`

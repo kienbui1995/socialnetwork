@@ -51,7 +51,7 @@ func GetUser(c *gin.Context) {
 	} else {
 		userid, err := strconv.Atoi(c.Param("userid"))
 		if err != nil {
-			libs.ResponseBadRequestJSON(c, -1, err.Error())
+			libs.ResponseBadRequestJSON(c, 110, "Invalid user id"+err.Error()) // NeedEdit
 		} else {
 			var errUser error
 			var user models.User
@@ -81,13 +81,13 @@ func SignUp(c *gin.Context) {
 
 	errorDetails := []libs.ErrorDetail{}
 	if govalidator.IsByteLength(user.Username, 3, 15) == false {
-		errorDetails = append(errorDetails, libs.NewErrorDetail(1, govalidator.CamelCaseToUnderscore("UserName"), "Username is not valid"))
+		errorDetails = append(errorDetails, libs.NewErrorDetail(382, "Please enter a valid username."))
 	}
 	if govalidator.IsEmail(user.Email) == false {
-		errorDetails = append(errorDetails, libs.NewErrorDetail(2, "Email", "Email is not valid"))
+		errorDetails = append(errorDetails, libs.NewErrorDetail(385, "Please enter a valid email address."))
 	}
 	if len(errorDetails) != 0 {
-		libs.ResponseErrorJSON(c, libs.Errors{Code: -1, Message: "Fail in sign up", ErrorDetails: errorDetails})
+		libs.ResponseErrorJSON(c, libs.Errors{Code: 387, Message: "There was an error with your registration. Please try registering again."})
 		return
 	}
 	user.Status = 0

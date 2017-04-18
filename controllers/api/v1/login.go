@@ -42,6 +42,25 @@ func Login(c *gin.Context) {
 	libs.ResponseSuccessJSON(c, 1, "Login successful!", token)
 }
 
+// LoginViaFacebook func is login or sign up via Facebook
+func LoginViaFacebook(c *gin.Context) {
+	type FacebookToken struct {
+		ID          string `json:"id"`
+		AccessToken string `json:"access_token"`
+	}
+	var json FacebookToken
+	err := c.Bind(&json)
+	if err != nil {
+		c.Abort()
+		return
+	}
+
+	verify := libs.VerifyFacebookID(json.ID, json.AccessToken)
+	if verify != true {
+
+	}
+}
+
 // Logout func to remove token of user
 func Logout(c *gin.Context) {
 
