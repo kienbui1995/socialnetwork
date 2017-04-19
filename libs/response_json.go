@@ -81,8 +81,14 @@ func ResponseBadRequestJSON(c *gin.Context, code int, message interface{}) {
 
 //Response error API
 
-//ResponseErrorJSON func
-func ResponseErrorJSON(c *gin.Context, errors Errors) {
+//ResponseErrorsJSON func
+func ResponseErrorsJSON(c *gin.Context, errors Errors) {
 	c.JSON(400, errors)
+	c.Abort()
+}
+
+//ResponseErrorJSON func
+func ResponseErrorJSON(c *gin.Context, error ErrorDetail) {
+	c.JSON(400, error)
 	c.Abort()
 }

@@ -21,23 +21,26 @@ func Login(c *gin.Context) {
 	}
 	defaultvalue := ""
 	if json.Username == defaultvalue || json.Password == defaultvalue || json.Device == defaultvalue {
-		libs.ResponseAuthJSON(c, -1, "Missing a few parameters")
+		libs.ResponseAuthJSON(c, 101, "Missing a few fields.")
 		c.Abort()
 		return
 	}
 	id, err := services.Login(json)
 
 	if err != nil {
-		libs.ResponseAuthJSON(c, -1, err.Error())
+		libs.ResponseAuthJSON(c, 409, "No exist user: "+err.Error())
 		c.Abort()
 		return
 	}
 	tokenstring, errtoken := middlewares.GenerateToken(id, json.Device, SuperSecretPassword)
 	if errtoken != nil {
-		libs.ResponseAuthJSON(c, -1, errtoken.Error())
+		libs.ResponseAuthJSON(c, 408, "Error in generate token: "+errtoken.Error())
 		return
 	}
-	go services.SaveToken(id, json.Device, tokenstring)
+	if saveToken, err := services.SaveToken(id, json.Device, tokenstring); saveToken != true || err != nil {
+		libs.ResponseBadRequestJSON(c, 1, "Don't save token"+err.Error())
+		return
+	}
 	token := map[string]string{"token": tokenstring}
 	libs.ResponseSuccessJSON(c, 1, "Login successful!", token)
 }
@@ -69,24 +72,24 @@ func Logout(c *gin.Context) {
 	// delete token from DB
 	claims, err := middlewares.ExtractClaims(token, SuperSecretPassword)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
+		libs.ResponseBadRequestJSON(c, 407, "Error in checking token: "+err.Error())
+		// c.JSON(200, gin.H{
+		// 	"code":    -1,
+		// 	"message": err.Error(),
+		// })
 		return
 	}
 
 	userid := claims["userid"].(float64)
 	existToken, errExistToken := services.CheckExistToken(int(userid), token)
 	if errExistToken != nil || existToken == false {
-		libs.ResponseAuthJSON(c, -1, errExistToken.Error())
+		libs.ResponseAuthJSON(c, 406, "No exist token: "+errExistToken.Error())
 		return
 	}
 	deletetoken, errdelete := services.DeleteToken(int(userid), token)
 	if deletetoken != true || errdelete != nil {
-		libs.ResponseBadRequestJSON(c, -1, errdelete.Error())
+		libs.ResponseBadRequestJSON(c, 407, "Error in checking token: "+errdelete.Error())
 		return
 	}
 	libs.ResponseNoContentJSON(c, 1, "Logout successful")
-
 }

@@ -172,8 +172,8 @@ func DeleteUser(userid int) (int, error) {
 	return res, err
 }
 
-//CheckExistUser func to check exist User
-func CheckExistUser(userid int) (bool, error) {
+//CheckExistUserByID func to check exist User
+func CheckExistUserByID(userid int) (bool, error) {
 	where := fmt.Sprintf("ID(u) = %d", userid)
 	existNode, err := CheckExistNode("User", where)
 	if err != nil {
@@ -186,13 +186,88 @@ func CheckExistUser(userid int) (bool, error) {
 }
 
 //CheckExistUserWithUsernameAndEmail func to check exist User
-func CheckExistUserWithUsernameAndEmail(username string, email string) (bool, error) {
-	where := fmt.Sprintf("u.username = %s, u.email = %s", username, email)
-	existNode, err := CheckExistNode("User", where)
+// return 1: Exist
+// return 2: Exist Username
+// return 3: Exist Email
+// return 0: Don't exist
+func CheckExistUserWithUsernameAndEmail(username string, email string) (int, error) {
+	var where string
+	if len(username) != 0 && len(email) != 0 {
+		where = fmt.Sprintf("u.username = %s, u.email = %s", username, email)
+		existNode, err := CheckExistNode("User", where)
+		if err != nil {
+			return 0, err
+		}
+		if existNode == true {
+			return 1, nil
+		}
+	} else if len(username) != 0 {
+		where = fmt.Sprintf("u.username = %s", username)
+		existNode, err := CheckExistNode("User", where)
+		if err != nil {
+			return 0, err
+		}
+		if existNode == true {
+			return 2, nil
+		}
+	} else if len(email) != 0 {
+		where = fmt.Sprintf("u.email = %s", email)
+		existNode, err := CheckExistNode("User", where)
+		if err != nil {
+			return 0, err
+		}
+		if existNode == true {
+			return 3, nil
+		}
+
+	} else {
+		return 0, errors.New("Missing username and email")
+	}
+
+	return 0, nil
+}
+
+//CheckExistUsername func
+func CheckExistUsername(username string) (bool, error) {
+	stmt := fmt.Sprintf("MATCH (u:User) WHERE u.username = \"%s\" RETURN ID(u) as id", username)
+	type resStruct struct {
+		ID int `json:"id"`
+	}
+	res := []resStruct{}
+	cq := neoism.CypherQuery{
+		Statement: stmt,
+
+		Result: &res,
+	}
+	err := conn.Cypher(&cq)
 	if err != nil {
 		return false, err
 	}
-	if existNode == true {
+
+	if len(res) != 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+//CheckExistEmail func
+func CheckExistEmail(email string) (bool, error) {
+	stmt := fmt.Sprintf("MATCH (u:User) WHERE u.email = \"%s\" RETURN ID(u) as id", email)
+	type resStruct struct {
+		ID int `json:"id"`
+	}
+	res := []resStruct{}
+	cq := neoism.CypherQuery{
+		Statement: stmt,
+
+		Result: &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+
+	if len(res) != 0 {
 		return true, nil
 	}
 	return false, nil

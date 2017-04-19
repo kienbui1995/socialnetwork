@@ -17,7 +17,7 @@ func AuthHandler(c *gin.Context) {
 	}
 	ok, err := middlewares.ValidateToken(token, SuperSecretPassword)
 	if err != nil {
-		libs.ResponseAuthJSON(c, -1, err.Error())
+		libs.ResponseAuthJSON(c, 407, "Error in checking toke: "+err.Error())
 		return
 	}
 	if ok == false {
@@ -26,12 +26,12 @@ func AuthHandler(c *gin.Context) {
 	}
 	claims, errclaim := middlewares.ExtractClaims(token, SuperSecretPassword)
 	if errclaim != nil {
-		libs.ResponseAuthJSON(c, -1, errclaim.Error())
+		libs.ResponseAuthJSON(c, 407, "Error in extracting claims in token: "+errclaim.Error())
 		return
 	}
 	existtoken, errexist := services.CheckExistToken(int(claims["userid"].(float64)), token)
 	if errexist != nil {
-		libs.ResponseAuthJSON(c, -1, errexist.Error())
+		libs.ResponseAuthJSON(c, 407, "Error in checking token: "+errexist.Error())
 		return
 	}
 	if existtoken != true {

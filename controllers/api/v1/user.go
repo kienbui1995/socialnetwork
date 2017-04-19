@@ -79,26 +79,41 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
-	errorDetails := []libs.ErrorDetail{}
+	// errorDetails := []libs.ErrorDetail{}
 	if govalidator.IsByteLength(user.Username, 3, 15) == false {
-		errorDetails = append(errorDetails, libs.NewErrorDetail(382, "Please enter a valid username."))
-	}
-	if govalidator.IsEmail(user.Email) == false {
-		errorDetails = append(errorDetails, libs.NewErrorDetail(385, "Please enter a valid email address."))
-	}
-	if len(errorDetails) != 0 {
-		libs.ResponseErrorJSON(c, libs.Errors{Code: 387, Message: "There was an error with your registration. Please try registering again.", ErrorDetails: errorDetails})
+		// errorDetails = append(errorDetails, libs.NewErrorDetail(382, "Please enter a valid username."))
+		libs.ResponseErrorJSON(c, libs.NewErrorDetail(382, "Please enter a valid username."))
 		return
 	}
+	if govalidator.IsEmail(user.Email) == false {
+		// errorDetails = append(errorDetails, libs.NewErrorDetail(385, "Please enter a valid email address."))
+		libs.ResponseErrorJSON(c, libs.NewErrorDetail(385, "Please enter a valid email address."))
+		return
+	}
+	fmt.Printf("\nUsername:%s", user.Username)
+	if exist, _ := services.CheckExistUsername(user.Username); exist == true {
+		libs.ResponseErrorJSON(c, libs.NewErrorDetail(376, "The login credential you provided belongs to an existing account"))
+		return
+	}
+	fmt.Printf("\nEmail:%s", user.Email)
+	if exist, _ := services.CheckExistEmail(user.Email); exist == true {
+		libs.ResponseErrorJSON(c, libs.NewErrorDetail(371, "The email address you provided belongs to an existing account"))
+		return
+	}
+	// if len(errorDetails) != 0 {
+	// 	libs.ResponseErrorsJSON(c, libs.Errors{Code: 387, Message: "There was an error with your registration. Please try registering again.", ErrorDetails: errorDetails})
+	// 	return
+	// }
 	user.Status = 0
 	user.EmailActive = libs.RandStringBytes(6)
-	fmt.Printf("%v", user.EmailActive)
+	// /fmt.Printf("%v", user.EmailActive)
 	user.UserID, errUser = services.CreateUser(user)
 	if errUser != nil {
-		libs.ResponseJSON(c, 400, -1, errUser.Error(), nil)
+		libs.ResponseJSON(c, 400, 387, "There was an error with your registration. Please try registering again: "+errUser.Error(), nil)
 		return
 
 	}
+
 	sender := libs.NewSender("kien.laohac@gmail.com", "ytanyybkizzygqjk")
 	var email []string
 	email = append(email, user.Email)
@@ -136,19 +151,21 @@ func UpdateUser(c *gin.Context) {
 
 	userid, err := strconv.Atoi(c.Param("userid"))
 	if err != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
+		libs.ResponseBadRequestJSON(c, 110, "Invalid user id: "+err.Error())
+		// c.JSON(200, gin.H{
+		// 	"code":    -1,
+		// 	"message": err.Error(),
+		// })
 		return
 	}
 	var jsonUser map[string]interface{}
 
 	if c.Bind(&jsonUser) != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
+		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter"+c.Bind(&jsonUser).Error())
+		// c.JSON(200, gin.H{
+		// 	"code":    -1,
+		// 	"message": err.Error(),
+		// })
 		return
 	}
 	var user models.User
@@ -159,10 +176,11 @@ func UpdateUser(c *gin.Context) {
 	}
 	update, err = services.UpdateUser(user)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
+		libs.ResponseBadRequestJSON(c, 310, "User data edit failure")
+		// c.JSON(200, gin.H{
+		// 	"code":    -1,
+		// 	"message": err.Error(),
+		// })
 		return
 	}
 	if update == true {
@@ -172,10 +190,11 @@ func UpdateUser(c *gin.Context) {
 			"userid":  user.UserID,
 		})
 	} else {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": "Don't update info in DB",
-		})
+		libs.ResponseBadRequestJSON(c, 310, "User data edit failure")
+		// c.JSON(200, gin.H{
+		// 	"code":    -1,
+		// 	"message": "Don't update info in DB",
+		// })
 	}
 
 }
