@@ -161,7 +161,7 @@ func ForgotPassword(c *gin.Context) {
 		var email []string
 		email = append(email, recoverpass.Email)
 		go sender.SendMail(email, fmt.Sprintf("Recover password on TLSEN"), fmt.Sprintf("\ncode: %s\n Please verify within 2 minutes.", recoverpass.RecoveryCode))
-		libs.ResponseNoContentJSON(c)
+		libs.ResponseSuccessJSON(c, 1, "A email sent.", nil)
 	} else { // no exist email
 		libs.ResponseAuthJSON(c, 413, "No exist email.")
 	}
