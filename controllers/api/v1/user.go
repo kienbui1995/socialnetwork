@@ -105,7 +105,13 @@ func SignUp(c *gin.Context) {
 	// 	return
 	// }
 	user.Status = 0
-	user.EmailActive = libs.RandStringBytes(6)
+	activecode := libs.RandStringBytes(6)
+	go func() {
+		if err := services.CreateEmailActive(models.EmailActive{Email: user.Email, ActiveCode: activecode, UserID: user.UserID}); err != nil {
+			fmt.Printf("\nCreate Email Active faile: %s", err.Error())
+		}
+
+	}()
 	// /fmt.Printf("%v", user.EmailActive)
 	user.UserID, errUser = services.CreateUser(user)
 	if errUser != nil {
@@ -117,8 +123,8 @@ func SignUp(c *gin.Context) {
 	sender := libs.NewSender("kien.laohac@gmail.com", "ytanyybkizzygqjk")
 	var email []string
 	email = append(email, user.Email)
-	linkActive := "<a href='localhost:8080/user/" + string(user.UserID) + "?email_active=" + user.EmailActive + "'>Active</a>"
-	go sender.SendMail(email, fmt.Sprintf("Active user %s on TLSEN", user.Username), fmt.Sprintf("Content-Type: text/html; charset=UTF-8\n\ncode: %s OR active via link: %s", user.EmailActive, linkActive))
+	linkActive := "<a href='localhost:8080/user/" + string(user.UserID) + "?email_active=" + activecode + "'>Active</a>"
+	go sender.SendMail(email, fmt.Sprintf("Active user %s on TLSEN", user.Username), fmt.Sprintf("Content-Type: text/html; charset=UTF-8\n\ncode: %s OR active via link: %s", activecode, linkActive))
 
 	libs.ResponseCreatedJSON(c, 1, "Create user successful!", user.UserID)
 

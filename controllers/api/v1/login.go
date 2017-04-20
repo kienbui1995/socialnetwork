@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/kienbui1995/socialnetwork/libs"
 	"github.com/kienbui1995/socialnetwork/middlewares"
@@ -120,5 +122,113 @@ func Logout(c *gin.Context) {
 		libs.ResponseBadRequestJSON(c, 407, "Error in checking token: "+errdelete.Error())
 		return
 	}
-	libs.ResponseNoContentJSON(c, 1, "Logout successful")
+	libs.ResponseNoContentJSON(c)
+}
+
+//ForgotPassword func
+func ForgotPassword(c *gin.Context) {
+	var json struct {
+		Email string `json:"email"`
+	}
+	err := c.Bind(&json)
+	if err != nil {
+		c.Abort()
+		return
+	}
+
+	if len(json.Email) == 0 {
+		libs.ResponseAuthJSON(c, 101, "Missing a few fields.")
+		c.Abort()
+		return
+	}
+	existemail, err := services.CheckExistEmail(json.Email)
+	if err != nil {
+		c.Abort()
+		return
+	}
+
+	if existemail == true { // send password via mail
+		type RecoverPassword struct {
+			Email        string `json:"email"`
+			RecoveryCode string `json:"recovery_code"`
+		}
+		recoverpass := RecoverPassword{Email: json.Email, RecoveryCode: libs.RandNumberBytes(6)}
+		if err := services.CreateRecoverPassword(recoverpass.Email, recoverpass.RecoveryCode); err != nil {
+			libs.ResponseBadRequestJSON(c, -1, "Error in creating recover password: "+err.Error())
+			return
+		}
+		sender := libs.NewSender("kien.laohac@gmail.com", "ytanyybkizzygqjk")
+		var email []string
+		email = append(email, recoverpass.Email)
+		go sender.SendMail(email, fmt.Sprintf("Recover password on TLSEN"), fmt.Sprintf("\ncode: %s\n Please verify within 2 minutes.", recoverpass.RecoveryCode))
+		libs.ResponseNoContentJSON(c)
+	} else { // no exist email
+		libs.ResponseAuthJSON(c, 413, "No exist email.")
+	}
+}
+
+//VerifyRecoveryCode func
+func VerifyRecoveryCode(c *gin.Context) {
+	var json struct {
+		Email        string `json:"email"`
+		RecoveryCode string `json:"recovery_code"`
+	}
+	err := c.Bind(&json)
+	if err != nil {
+		c.Abort()
+		return
+	}
+
+	if len(json.Email) == 0 || len(json.RecoveryCode) == 0 {
+		libs.ResponseAuthJSON(c, 101, "Missing a few fields.")
+		c.Abort()
+		return
+	}
+	id, err := services.VerifyRecoveryCode(json.Email, json.RecoveryCode)
+	if err != nil {
+		libs.ResponseBadRequestJSON(c, -1, "Error in verify recovery code: "+err.Error())
+		c.Abort()
+		return
+	}
+	if id >= 0 { // generate a key
+		key := libs.RandStringBytes(6)
+
+		libs.ResponseSuccessJSON(c, 1, "ID user and key to create new password", map[string]interface{}{"id": id, "recovery_key": key})
+		go func() {
+			err := services.AddUserRecoveryKey(id, key)
+			if err != nil {
+				panic(err)
+			}
+		}()
+
+	} else {
+		libs.ResponseBadRequestJSON(c, -1, "Error with a userid < 0")
+	}
+
+}
+
+//RenewPassword func
+func RenewPassword(c *gin.Context) {
+	var json struct {
+		ID          int    `json:"id"`
+		RecoveryKey string `json:"recovery_key"`
+		NewPassword string `json:"new_password"`
+	}
+	err := c.Bind(&json)
+	if err != nil {
+		c.Abort()
+		return
+	}
+
+	if json.ID != 0 || len(json.RecoveryKey) == 0 || len(json.NewPassword) == 0 {
+		libs.ResponseAuthJSON(c, 101, "Missing a few fields.")
+		c.Abort()
+		return
+	}
+	if err := services.RenewPassword(json.ID, json.NewPassword); err != nil {
+		libs.ResponseBadRequestJSON(c, -1, "Error in creating new password: "+err.Error())
+		c.Abort()
+		return
+	}
+	libs.ResponseNoContentJSON(c)
 }

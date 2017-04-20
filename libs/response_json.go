@@ -29,7 +29,7 @@ func ResponseSuccessJSON(c *gin.Context, code int, message string, data interfac
 }
 
 //ResponseNoContentJSON func
-func ResponseNoContentJSON(c *gin.Context, code int, message string) {
+func ResponseNoContentJSON(c *gin.Context) {
 	c.Status(204)
 }
 

@@ -295,3 +295,90 @@ func CheckExistFacebookID(facebookid string) (int, error) {
 	}
 	return 0, nil
 }
+
+//CreateEmailActive func
+func CreateEmailActive(mailactive models.EmailActive) error {
+	if mailactive.UserID != 0 && len(mailactive.ActiveCode) != 0 && len(mailactive.Email) != 0 {
+		stmt := fmt.Sprintf("MATCH (u:User) WHERE ID(u) = \"%d\" AND u.email = \"%s\" SET u.active_code = \"%s\"", mailactive.UserID, mailactive.Email, mailactive.ActiveCode)
+		cq := neoism.CypherQuery{
+			Statement: stmt,
+		}
+		if err := conn.Cypher(&cq); err != nil {
+			return err
+		}
+		return nil
+	}
+	return errors.New("Error in creating email active")
+}
+
+//CreateRecoverPassword func
+func CreateRecoverPassword(email string, recoverycode string) error {
+	if len(email) != 0 && len(recoverycode) != 0 {
+		stmt := fmt.Sprintf("MATCH (u:User) WHERE u.email = \"%s\" SET u.recovery_code = \"%s\", u.recovery_expired_at = TIMESTAMP()+1800000", email, recoverycode)
+		cq := neoism.CypherQuery{
+			Statement: stmt,
+		}
+		if err := conn.Cypher(&cq); err != nil {
+			return err
+		}
+		return nil
+	}
+	return errors.New("Error in creating recovery code")
+}
+
+//VerifyRecoveryCode func
+func VerifyRecoveryCode(email string, recoverycode string) (int, error) {
+	if len(email) != 0 && len(recoverycode) != 0 {
+		stmt := fmt.Sprintf("MATCH (u:User) WHERE u.email = \"%s\" and u.recovery_code = \"%s\"  and u.recovery_expired_at > TIMESTAMP() RETURN ID(u) as id", email, recoverycode) //needfix
+		res := []struct {
+			ID int `json:"id"`
+		}{}
+		cq := neoism.CypherQuery{
+			Statement: stmt,
+			Result:    &res,
+		}
+		if err := conn.Cypher(&cq); err != nil {
+			return -1, err
+		}
+		if len(res) > 0 {
+			return res[0].ID, nil
+		}
+		return -1, errors.New("No exist ID")
+
+	}
+	return -1, errors.New("Error in verify recovery code")
+}
+
+//AddUserRecoveryKey func to add a property of user
+func AddUserRecoveryKey(userid int, value interface{}) error {
+	stmt := `
+	MATCH(u:User) WHERE ID(u)= {userid} SET u.recovery_key = {value}
+	`
+	params := neoism.Props{
+		"userid": userid,
+		"value":  value,
+	}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+	}
+	err := conn.Cypher(&cq)
+	return err
+}
+
+//RenewPassword func
+func RenewPassword(userid int, newpassword string) error {
+	stmt := `
+	MATCH(u:User) WHERE ID(u)= {userid} SET u.password = {newpassword}
+	`
+	params := neoism.Props{
+		"userid":      userid,
+		"newpassword": newpassword,
+	}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+	}
+	err := conn.Cypher(&cq)
+	return err
+}
