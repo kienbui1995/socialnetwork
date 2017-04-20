@@ -216,7 +216,7 @@ func RenewPassword(c *gin.Context) {
 	}
 	err := c.Bind(&json)
 	if err != nil {
-		c.Abort()
+		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter")
 		return
 	}
 
