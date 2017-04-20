@@ -18,7 +18,7 @@ func main() {
 	router.POST("/sign_up", apiv1.SignUp)                          // create a user
 	router.POST("/forgot_password", apiv1.ForgotPassword)          // forgot password method
 	router.POST("/verify_recovery_code", apiv1.VerifyRecoveryCode) //verify recovery code method
-	router.POST("/renew_password", apiv1.RenewPassword)            //renew password after verify_recovery_code
+	router.PUT("/renew_password", apiv1.RenewPassword)             //renew password after verify_recovery_code
 	// Work for User
 	authorized := router.Group("/", apiv1.AuthHandler)
 	{

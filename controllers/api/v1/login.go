@@ -154,13 +154,13 @@ func ForgotPassword(c *gin.Context) {
 		}
 		recoverpass := RecoverPassword{Email: json.Email, RecoveryCode: libs.RandNumberBytes(6)}
 		if err := services.CreateRecoverPassword(recoverpass.Email, recoverpass.RecoveryCode); err != nil {
-			libs.ResponseBadRequestJSON(c, -1, "Error in creating recover password: "+err.Error())
-			return
+			libs.ResponseServerErrorJSON(c)
+			panic("Error in creating recover password: " + err.Error())
 		}
 		sender := libs.NewSender("kien.laohac@gmail.com", "ytanyybkizzygqjk")
 		var email []string
 		email = append(email, recoverpass.Email)
-		go sender.SendMail(email, fmt.Sprintf("Recover password on TLSEN"), fmt.Sprintf("\ncode: %s\n Please verify within 2 minutes.", recoverpass.RecoveryCode))
+		go sender.SendMail(email, fmt.Sprintf("Recover password on TLSEN"), fmt.Sprintf("\ncode: %s\n Please verify within 30 minutes.", recoverpass.RecoveryCode))
 		libs.ResponseSuccessJSON(c, 1, "A email sent.", nil)
 	} else { // no exist email
 		libs.ResponseAuthJSON(c, 413, "No exist email.")
@@ -186,9 +186,9 @@ func VerifyRecoveryCode(c *gin.Context) {
 	}
 	id, err := services.VerifyRecoveryCode(json.Email, json.RecoveryCode)
 	if err != nil {
-		libs.ResponseBadRequestJSON(c, -1, "Error in verify recovery code: "+err.Error())
-		c.Abort()
-		return
+		libs.ResponseServerErrorJSON(c)
+		panic("Error in verify recovery code: " + err.Error())
+
 	}
 	if id >= 0 { // generate a key
 		key := libs.RandStringBytes(6)
@@ -226,9 +226,9 @@ func RenewPassword(c *gin.Context) {
 		return
 	}
 	if err := services.RenewPassword(json.ID, json.NewPassword); err != nil {
-		libs.ResponseBadRequestJSON(c, -1, "Error in creating new password: "+err.Error())
-		c.Abort()
-		return
+		libs.ResponseServerErrorJSON(c)
+		panic("Error in creating new password: " + err.Error())
+
 	}
-	libs.ResponseNoContentJSON(c)
+	libs.ResponseSuccessJSON(c, 1, "Renew password successful", nil)
 }
