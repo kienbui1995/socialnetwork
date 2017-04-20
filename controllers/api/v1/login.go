@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kienbui1995/socialnetwork/libs"
@@ -210,7 +211,7 @@ func VerifyRecoveryCode(c *gin.Context) {
 //RenewPassword func
 func RenewPassword(c *gin.Context) {
 	var json struct {
-		ID          int    `json:"id"`
+		ID          string `json:"id"`
 		RecoveryKey string `json:"recovery_key"`
 		NewPassword string `json:"new_password"`
 	}
@@ -220,12 +221,16 @@ func RenewPassword(c *gin.Context) {
 		return
 	}
 
-	if json.ID != 0 || len(json.RecoveryKey) == 0 || len(json.NewPassword) == 0 {
+	if len(json.ID) != 0 || len(json.RecoveryKey) == 0 || len(json.NewPassword) == 0 {
 		libs.ResponseAuthJSON(c, 101, "Missing a few fields.")
 		c.Abort()
 		return
 	}
-	if err := services.RenewPassword(json.ID, json.NewPassword); err != nil {
+	id, err := strconv.Atoi(json.ID)
+	if err != nil {
+		libs.ResponseBadRequestJSON(c, 110, "Invalid user id")
+	}
+	if err := services.RenewPassword(id, json.NewPassword); err != nil {
 		libs.ResponseServerErrorJSON(c)
 		panic("Error in creating new password: " + err.Error())
 
