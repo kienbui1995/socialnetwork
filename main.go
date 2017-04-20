@@ -12,9 +12,10 @@ var (
 func main() {
 	router := gin.Default()
 	// Work for login
-	router.POST("/login", apiv1.Login)    // login method
-	router.POST("/logout", apiv1.Logout)  // logout method
-	router.POST("/sign_up", apiv1.SignUp) // create a user
+	router.POST("/login", apiv1.Login)                     // login method
+	router.POST("/login_facebook", apiv1.LoginViaFacebook) // login via facebook
+	router.POST("/logout", apiv1.Logout)                   // logout method
+	router.POST("/sign_up", apiv1.SignUp)                  // create a user
 	// Work for User
 	authorized := router.Group("/", apiv1.AuthHandler)
 	{

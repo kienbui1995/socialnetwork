@@ -272,3 +272,26 @@ func CheckExistEmail(email string) (bool, error) {
 	}
 	return false, nil
 }
+
+//CheckExistFacebookID func
+func CheckExistFacebookID(facebookid string) (int, error) {
+	stmt := fmt.Sprintf("MATCH (u:User) WHERE u.facebook_id = \"%s\" RETURN ID(u) as id", facebookid)
+	type resStruct struct {
+		ID int `json:"id"`
+	}
+	res := []resStruct{}
+	cq := neoism.CypherQuery{
+		Statement: stmt,
+
+		Result: &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(res) != 0 {
+		return res[0].ID, nil
+	}
+	return 0, nil
+}

@@ -27,14 +27,17 @@ func VerifyFacebookID(id string, accessToken string) bool {
 		panic(err)
 	}
 
-	var jsonData struct{ id string }
+	var jsonData struct {
+		ID string `json:"id"`
+	}
 
 	err = json.Unmarshal([]byte(jsonDataFromHTTP), &jsonData) // here!
 
 	if err != nil {
 		panic(err)
 	}
-
-	return jsonData.id == id
-
+	if jsonData.ID == id {
+		return true
+	}
+	return false
 }

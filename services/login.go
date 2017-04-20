@@ -10,12 +10,13 @@ import (
 // Login func to user login system
 func Login(login models.Login) (int, error) {
 	stmt := `
-	MATCH (u:User) WHERE u.username	 = {username} and u.password = {password} return ID(u)
+	MATCH (u:User) WHERE u.username	 = {username} return ID(u) as id, u.password as password
 	`
 	params := neoism.Props{"username": login.Username, "password": login.Password}
 
 	res := []struct {
-		UserID int `json:"ID(u)"`
+		ID       int    `json:"id"`
+		Password string `json:"password"`
 	}{}
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
@@ -30,8 +31,10 @@ func Login(login models.Login) (int, error) {
 
 	if len(res) == 0 {
 		return -1, errors.New("No exist user")
+	} else if res[0].Password == login.Password {
+		return res[0].ID, nil
 	}
-	return res[0].UserID, nil
+	return res[0].ID, errors.New("Wrong password")
 }
 
 // SaveToken func t insert token to db

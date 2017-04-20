@@ -28,7 +28,11 @@ func Login(c *gin.Context) {
 	id, err := services.Login(json)
 
 	if err != nil {
-		libs.ResponseAuthJSON(c, 409, "No exist user: "+err.Error())
+		if id >= 0 {
+			libs.ResponseAuthJSON(c, 412, "Error login: "+err.Error())
+		} else {
+			libs.ResponseAuthJSON(c, 409, "No exist user: "+err.Error())
+		}
 		c.Abort()
 		return
 	}
@@ -50,6 +54,7 @@ func LoginViaFacebook(c *gin.Context) {
 	type FacebookToken struct {
 		ID          string `json:"id"`
 		AccessToken string `json:"access_token"`
+		Device      string `json:"device"`
 	}
 	var json FacebookToken
 	err := c.Bind(&json)
@@ -57,11 +62,35 @@ func LoginViaFacebook(c *gin.Context) {
 		c.Abort()
 		return
 	}
-
-	verify := libs.VerifyFacebookID(json.ID, json.AccessToken)
-	if verify != true {
-
+	if len(json.ID) == 0 || len(json.Device) == 0 || len(json.AccessToken) == 0 {
+		libs.ResponseAuthJSON(c, 101, "Missing a few fields.")
+		return
 	}
+
+	if id, errExist := services.CheckExistFacebookID(json.ID); errExist == nil && id != 0 {
+		verify := libs.VerifyFacebookID(json.ID, json.AccessToken)
+		if verify == true {
+			tokenstring, errtoken := middlewares.GenerateToken(id, json.Device, SuperSecretPassword)
+			if errtoken != nil {
+				libs.ResponseAuthJSON(c, 408, "Error in generate token: "+errtoken.Error())
+				return
+			}
+			if saveToken, err := services.SaveToken(id, json.Device, tokenstring); saveToken != true || err != nil {
+				libs.ResponseBadRequestJSON(c, 1, "Don't save token"+err.Error())
+				return
+			}
+			token := map[string]string{"token": tokenstring}
+			libs.ResponseSuccessJSON(c, 1, "Login successful!", token)
+			return
+		}
+		libs.ResponseBadRequestJSON(c, 411, "Error in checking facebook access token.")
+
+	} else {
+
+		libs.ResponseNotFoundJSON(c, 410, "No exist account with this facebook.")
+		return
+	}
+	// libs.ResponseBadRequestJSON(c, -1, "Login Facebook fail")
 }
 
 // Logout func to remove token of user
