@@ -221,7 +221,7 @@ func RenewPassword(c *gin.Context) {
 		return
 	}
 
-	if len(json.ID) != 0 || len(json.RecoveryKey) == 0 || len(json.NewPassword) == 0 {
+	if len(json.ID) == 0 || len(json.RecoveryKey) == 0 || len(json.NewPassword) == 0 {
 		libs.ResponseAuthJSON(c, 101, "Missing a few fields.")
 		c.Abort()
 		return
