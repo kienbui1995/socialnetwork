@@ -185,25 +185,36 @@ func VerifyRecoveryCode(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	id, err := services.VerifyRecoveryCode(json.Email, json.RecoveryCode)
+	// check exist user with this email
+	exist, err := services.CheckExistEmail(json.Email)
 	if err != nil {
 		libs.ResponseServerErrorJSON(c)
-		panic("Error in verify recovery code: " + err.Error())
+		panic("Error in check exist email: " + err.Error())
 
-	}
-	if id >= 0 { // generate a key
-		key := libs.RandStringBytes(6)
+	} else if exist == true {
+		id, err := services.VerifyRecoveryCode(json.Email, json.RecoveryCode)
+		if err != nil {
+			libs.ResponseServerErrorJSON(c)
+			panic("Error in verify recovery code: " + err.Error())
 
-		libs.ResponseSuccessJSON(c, 1, "ID user and key to create new password", map[string]interface{}{"id": id, "recovery_key": key})
-		go func() {
-			err := services.AddUserRecoveryKey(id, key)
-			if err != nil {
-				panic(err)
-			}
-		}()
+		}
+		if id >= 0 { // generate a key
+			key := libs.RandStringBytes(6)
 
-	} else {
-		libs.ResponseBadRequestJSON(c, -1, "Error with a userid < 0")
+			libs.ResponseSuccessJSON(c, 1, "ID user and key to create new password", map[string]interface{}{"id": id, "recovery_key": key})
+			go func() {
+				err := services.AddUserRecoveryKey(id, key)
+				if err != nil {
+					libs.ResponseServerErrorJSON(c)
+					panic(err)
+				}
+			}()
+
+		} else {
+			libs.ResponseNotFoundJSON(c, 414, "Error in recover password: Wrong recovery code.")
+		}
+	} else { // user with this emmail don't exist
+		libs.ResponseNotFoundJSON(c, 409, "No exist user.")
 	}
 
 }
@@ -229,11 +240,23 @@ func RenewPassword(c *gin.Context) {
 	id, err := strconv.Atoi(json.ID)
 	if err != nil {
 		libs.ResponseBadRequestJSON(c, 110, "Invalid user id")
+		return
 	}
-	if err := services.RenewPassword(id, json.NewPassword); err != nil {
+	if ok, err := services.RenewPassword(id, json.RecoveryKey, json.NewPassword); err == nil && ok == true {
+		libs.ResponseSuccessJSON(c, 1, "Renew password successful", nil)
+		go func() {
+			okdel, errdel := services.DeleteRecoveryProperty(id)
+			if errdel != nil {
+				fmt.Printf("Error in DeleteRecoveryProperty: " + errdel.Error())
+			}
+			if okdel != true {
+				fmt.Printf("Error in DeleteRecoveryProperty: No delete")
+			}
+		}()
+	} else if err != nil {
 		libs.ResponseServerErrorJSON(c)
 		panic("Error in creating new password: " + err.Error())
-
+	} else if ok != true {
+		libs.ResponseNotFoundJSON(c, 310, "User data edit failure")
 	}
-	libs.ResponseSuccessJSON(c, 1, "Renew password successful", nil)
 }

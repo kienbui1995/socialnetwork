@@ -343,7 +343,7 @@ func VerifyRecoveryCode(email string, recoverycode string) (int, error) {
 		if len(res) > 0 {
 			return res[0].ID, nil
 		}
-		return -1, errors.New("No exist ID")
+		return -1, nil
 
 	}
 	return -1, errors.New("Error in verify recovery code")
@@ -367,18 +367,59 @@ func AddUserRecoveryKey(userid int, value interface{}) error {
 }
 
 //RenewPassword func
-func RenewPassword(userid int, newpassword string) error {
+func RenewPassword(userid int, recoverykey string, newpassword string) (bool, error) {
 	stmt := `
-	MATCH(u:User) WHERE ID(u)= {userid} SET u.password = {newpassword}
+	MATCH(u:User) WHERE ID(u)= {userid} AND u.recovery_key = {recoverykey} SET u.password = {newpassword}
+	RETURN u.password as password
 	`
+	res := []struct {
+		Password string `json:"password"`
+	}{}
 	params := neoism.Props{
 		"userid":      userid,
+		"recoverykey": recoverykey,
 		"newpassword": newpassword,
 	}
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
 		Parameters: params,
+		Result:     &res,
 	}
 	err := conn.Cypher(&cq)
-	return err
+	if err != nil {
+		return false, err
+	}
+	if len(res) > 0 && res[0].Password == newpassword {
+		return true, nil
+	}
+	return false, nil
+}
+
+//DeleteRecoveryProperty func
+func DeleteRecoveryProperty(userid int) (bool, error) {
+	stmt := fmt.Sprintf("MATCH (u:User) WHERE ID(u) = %d REMOVE u.recovery_key, u.recovery_code, u.recovery_expired_at RETURN ID(u) as id, exists(u.recovery_key) as k, exists(u.recovery_code) as c,exists(u.recovery_expired_at) as e ", userid)
+	type resStruct struct {
+		ID int  `json:"id"`
+		K  bool `json:"k"`
+		C  bool `json:"c"`
+		E  bool `json:"e"`
+	}
+	res := []resStruct{}
+	cq := neoism.CypherQuery{
+		Statement: stmt,
+
+		Result: &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+
+	if len(res) != 0 {
+		if res[0].ID == userid && res[0].K == true && res[0].C == true && res[0].E == true {
+			return true, nil
+		}
+		return false, nil
+	}
+	return false, errors.New("No exist user")
 }
