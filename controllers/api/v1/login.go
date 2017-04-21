@@ -123,7 +123,7 @@ func Logout(c *gin.Context) {
 		libs.ResponseBadRequestJSON(c, 407, "Error in checking token: "+errdelete.Error())
 		return
 	}
-	libs.ResponseNoContentJSON(c)
+	libs.ResponseSuccessJSON(c, 1, "Logout successful", nil)
 }
 
 //ForgotPassword func

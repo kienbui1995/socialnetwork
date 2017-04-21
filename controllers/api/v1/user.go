@@ -224,3 +224,23 @@ func DeleteUser(c *gin.Context) {
 	})
 
 }
+
+//CreateUserSubscribers func
+func CreateUserSubscribers(c *gin.Context) {
+	var user = models.User{}
+	var errUser error
+	//var json interface{}
+
+	if c.Bind(&user) != nil {
+		libs.ResponseJSON(c, 400, -1, c.Bind(&user).Error(), nil)
+		return
+	}
+
+	user.UserID, errUser = services.CreateUser(user)
+	if errUser != nil {
+		libs.ResponseJSON(c, 400, -1, errUser.Error(), nil)
+		return
+
+	}
+	libs.ResponseCreatedJSON(c, 1, "Create user successful!", user.UserID)
+}
