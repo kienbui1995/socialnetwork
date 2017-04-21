@@ -25,7 +25,7 @@ func Login(c *gin.Context) {
 	defaultvalue := ""
 	if json.Username == defaultvalue || json.Password == defaultvalue || json.Device == defaultvalue {
 		libs.ResponseAuthJSON(c, 101, "Missing a few fields.")
-		c.Abort()
+
 		return
 	}
 	id, err := services.Login(json)
@@ -33,10 +33,10 @@ func Login(c *gin.Context) {
 	if err != nil {
 		if id >= 0 {
 			libs.ResponseAuthJSON(c, 412, "Error login: "+err.Error())
+
 		} else {
 			libs.ResponseAuthJSON(c, 409, "No exist user: "+err.Error())
 		}
-		c.Abort()
 		return
 	}
 	tokenstring, errtoken := middlewares.GenerateToken(id, json.Device, SuperSecretPassword)
