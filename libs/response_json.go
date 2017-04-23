@@ -59,7 +59,7 @@ func ResponseAuthJSON(c *gin.Context, code int, message string) {
 		"code":    code,
 		"message": message,
 	})
-
+	c.Abort()
 }
 
 //ResponseNotFoundJSON func

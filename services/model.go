@@ -39,3 +39,32 @@ func CheckExistNode(label string, where string) (bool, error) {
 	}
 	return false, nil
 }
+
+// CheckExistNodeWithID func to return quantity of nodes
+func CheckExistNodeWithID(id int) (bool, error) {
+	stmt := `
+	MATCH (u) WHERE ID(u)={id} RETURN ID(u) as id;
+	`
+	params := neoism.Props{"id": id}
+
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+
+	if len(res) != 0 {
+		if res[0].ID == id {
+			return true, nil
+		}
+	}
+	return false, nil
+}

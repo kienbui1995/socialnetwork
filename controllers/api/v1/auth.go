@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/kienbui1995/socialnetwork/libs"
 	"github.com/kienbui1995/socialnetwork/middlewares"
@@ -38,4 +40,19 @@ func AuthHandler(c *gin.Context) {
 		libs.ResponseAuthJSON(c, 406, "No exist token.")
 		return
 	}
+}
+
+// GetUserIDFromToken func return userid to check permission
+func GetUserIDFromToken(token string) (int, error) {
+
+	if len(token) == 0 {
+		return -1, errors.New("NULL userid in token")
+	}
+
+	claims, errclaim := middlewares.ExtractClaims(token, SuperSecretPassword)
+	if errclaim != nil {
+		return -1, errclaim
+	}
+	return int(claims["userid"].(float64)), nil
+
 }

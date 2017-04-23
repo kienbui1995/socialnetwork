@@ -227,20 +227,83 @@ func DeleteUser(c *gin.Context) {
 
 //CreateUserSubscribers func
 func CreateUserSubscribers(c *gin.Context) {
-	var user = models.User{}
-	var errUser error
+	var sub = models.Subscriber{}
+	var errSub error
 	//var json interface{}
 
-	if c.Bind(&user) != nil {
-		libs.ResponseJSON(c, 400, -1, c.Bind(&user).Error(), nil)
+	if len(c.Param("userid")) == 0 || len(c.Param("toid")) == 0 {
+		libs.ResponseJSON(c, 400, 100, "Invalid parameter: userid", nil)
 		return
 	}
 
-	user.UserID, errUser = services.CreateUser(user)
-	if errUser != nil {
-		libs.ResponseJSON(c, 400, -1, errUser.Error(), nil)
+	sub.FromID, _ = strconv.Atoi(c.Param("userid"))
+	sub.ToID, _ = strconv.Atoi(c.Param("toid"))
+	if exist1, _ := services.CheckExistNodeWithID(sub.FromID); exist1 != true {
+		libs.ResponseJSON(c, 400, 110, "Invalid user id", nil)
+		return
+	}
+
+	//check permisson
+	if userid, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != sub.FromID || errGet != nil {
+		libs.ResponseAuthJSON(c, 200, "Permissions error")
+		return
+	}
+
+	if exist2, _ := services.CheckExistNodeWithID(sub.ToID); exist2 != true {
+		libs.ResponseJSON(c, 400, 110, "Invalid user id", nil)
+		return
+	}
+
+	sub.SubscriberID, errSub = services.CreateUserSubscriber(sub.FromID, sub.ToID)
+	if errSub != nil {
+		libs.ResponseJSON(c, 400, -1, errSub.Error(), nil)
 		return
 
 	}
-	libs.ResponseCreatedJSON(c, 1, "Create user successful!", user.UserID)
+	libs.ResponseCreatedJSON(c, 1, "Create subscriber successful!", sub)
+}
+
+//DeleteUserSubscribers func
+func DeleteUserSubscribers(c *gin.Context) {
+	var sub = models.Subscriber{}
+
+	//var json interface{}
+
+	if len(c.Param("userid")) == 0 || len(c.Param("toid")) == 0 {
+		libs.ResponseJSON(c, 400, 100, "Invalid parameter: userid", nil)
+		return
+	}
+
+	sub.FromID, _ = strconv.Atoi(c.Param("userid"))
+	sub.ToID, _ = strconv.Atoi(c.Param("toid"))
+	if exist1, _ := services.CheckExistNodeWithID(sub.FromID); exist1 != true {
+		libs.ResponseJSON(c, 400, 110, "Invalid user id", nil)
+		return
+	}
+
+	//check permission
+	if userid, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != sub.FromID || errGet != nil {
+		libs.ResponseAuthJSON(c, 200, "Permissions error")
+	}
+	if exist2, _ := services.CheckExistNodeWithID(sub.ToID); exist2 != true {
+		libs.ResponseJSON(c, 400, 110, "Invalid user id", nil)
+		return
+	}
+
+	if exist, err := services.CheckExistUserSubscriber(sub.FromID, sub.ToID); exist == false || err != nil {
+		libs.ResponseJSON(c, 400, 2, "No exist this object", nil)
+		return
+	}
+
+	delsub, errdel := services.DeleteUserSubscriber(sub.FromID, sub.ToID)
+	if errdel != nil && delsub == true {
+		libs.ResponseSuccessJSON(c, 1, "Delete subscriber successful", nil)
+		return
+
+	}
+	if errdel != nil {
+		libs.ResponseServerErrorJSON(c)
+		fmt.Printf("ERR: %s", errdel.Error())
+	}
+
 }
