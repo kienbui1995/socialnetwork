@@ -48,8 +48,8 @@ func Login(c *gin.Context) {
 		libs.ResponseBadRequestJSON(c, 1, "Don't save token"+err.Error())
 		return
 	}
-	token := map[string]string{"token": tokenstring}
-	libs.ResponseSuccessJSON(c, 1, "Login successful!", token)
+	data := map[string]interface{}{"token": tokenstring, "id": id}
+	libs.ResponseSuccessJSON(c, 1, "Login successful!", data)
 }
 
 // LoginViaFacebook func is login or sign up via Facebook
@@ -82,8 +82,8 @@ func LoginViaFacebook(c *gin.Context) {
 				libs.ResponseBadRequestJSON(c, 1, "Don't save token"+err.Error())
 				return
 			}
-			token := map[string]string{"token": tokenstring}
-			libs.ResponseSuccessJSON(c, 1, "Login successful!", token)
+			data := map[string]interface{}{"token": tokenstring, "id": id}
+			libs.ResponseSuccessJSON(c, 1, "Login successful!", data)
 			return
 		}
 		libs.ResponseBadRequestJSON(c, 411, "Error in checking facebook access token.")
