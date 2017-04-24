@@ -39,8 +39,11 @@ func main() {
 			RUser.PUT("/:userid/posts/:postid", apiv1.UpdatePost)    // user update a own post
 			RUser.DELETE("/:userid/posts/:postid", apiv1.DeletePost) // user delete a own post
 
+			// user witth follow
 			RUser.POST("/:userid/subscribers/:toid", apiv1.CreateUserSubscribers)
 			RUser.DELETE("/:userid/subscribers/:toid", apiv1.DeleteUserSubscribers)
+			RUser.GET("/:userid/followers", apiv1.GetFollowers)
+			RUser.GET("/:userid/subscribers", apiv1.GetSubscribers)
 			//user with login
 			// /RUser.POST("/login", apiv1.Login)
 		}

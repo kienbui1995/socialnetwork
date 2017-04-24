@@ -270,6 +270,60 @@ func CreateUserSubscribers(c *gin.Context) {
 	libs.ResponseCreatedJSON(c, 1, "Create subscriber successful!", sub)
 }
 
+//GetFollowers func
+func GetFollowers(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("userid"))
+	if err != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter: userid")
+		return
+	}
+	check, errCheck := CheckPermissionsWithID(id, c.Request.Header.Get("token"))
+	if errCheck != nil {
+		libs.ResponseServerErrorJSON(c)
+		fmt.Printf("ERROR in CheckPermissionsWithID: %s", errCheck.Error())
+		return
+	}
+
+	if check == false {
+		libs.ResponseAuthJSON(c, 200, "Permissions error")
+		return
+	}
+	SUserList, errGet := services.GetFollowers(id)
+	if errGet != nil {
+		libs.ResponseServerErrorJSON(c)
+		fmt.Printf("ERROR in GetFollowers: %s", errGet.Error())
+		return
+	}
+	libs.ResponseEntityListJSON(c, 1, "User list", SUserList, nil, len(SUserList))
+}
+
+//GetSubscribers func
+func GetSubscribers(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("userid"))
+	if err != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter: userid")
+		return
+	}
+	check, errCheck := CheckPermissionsWithID(id, c.Request.Header.Get("token"))
+	if errCheck != nil {
+		libs.ResponseServerErrorJSON(c)
+		fmt.Printf("ERROR in CheckPermissionsWithID: %s", errCheck.Error())
+		return
+	}
+
+	if check == false {
+		libs.ResponseAuthJSON(c, 200, "Permissions error")
+		return
+	}
+	SUserList, errGet := services.GetSubscribers(id)
+	if errGet != nil {
+		libs.ResponseServerErrorJSON(c)
+		fmt.Printf("ERROR in GetSubscribers: %s", errGet.Error())
+		return
+	}
+	libs.ResponseEntityListJSON(c, 1, "User list", SUserList, nil, len(SUserList))
+}
+
 //DeleteUserSubscribers func
 func DeleteUserSubscribers(c *gin.Context) {
 	var sub = models.Subscriber{}
@@ -310,7 +364,7 @@ func DeleteUserSubscribers(c *gin.Context) {
 	}
 	if errdel != nil {
 		libs.ResponseServerErrorJSON(c)
-		fmt.Printf("ERR: %s", errdel.Error())
+		fmt.Printf("ERROR in DeleteUserSubscriber: %s", errdel.Error())
 	}
 
 }

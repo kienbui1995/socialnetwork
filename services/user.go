@@ -445,6 +445,9 @@ func FindUserByUsernameAndFullName(s string) ([]models.SUser, error) {
 		return nil, err
 	}
 	if len(res) > 0 {
+		if len(res) == 1 && res[0].UserID == 0 {
+			return nil, nil
+		}
 		return res, nil
 	}
 	return nil, nil
