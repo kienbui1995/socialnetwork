@@ -20,3 +20,12 @@ type User struct {
 	Followers     int    `json:"followers"`
 	Followings    int    `json:"followings"`
 }
+
+//SUser struct for a sub user for get all user; search user, list user any where
+type SUser struct {
+	UserID     int    `json:"id"`
+	Username   string `json:"username"`
+	Avatar     string `json:"avatar"`
+	FullName   string `json:"full_name"`
+	IsFollowed bool   `json:"is_followed"`
+}

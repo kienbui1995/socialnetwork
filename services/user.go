@@ -423,3 +423,29 @@ func DeleteRecoveryProperty(userid int) (bool, error) {
 	}
 	return false, errors.New("No exist user")
 }
+
+//FindUserByUsernameAndFullName func
+func FindUserByUsernameAndFullName(s string) ([]models.SUser, error) {
+	stmt := `
+		 OPTIONAL MATCH(u:User) WHERE u.username CONTAINS {s}  OR u.full_name  CONTAINS {s}
+		 RETURN ID(u) as id, u.username as username, u.avatar as avatar, u.full_name as full_name,
+		 exists((:User{username:"admin"})-[:FOLLOW]->(u)) as is_followed
+	`
+	res := []models.SUser{}
+	params := neoism.Props{
+		"s": s,
+	}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) > 0 {
+		return res, nil
+	}
+	return nil, nil
+}

@@ -14,7 +14,7 @@ import (
 
 // GetUser func  return info user
 func GetUser(c *gin.Context) {
-	if c.Param("userid") == "" {
+	if len(c.Param("userid")) == 0 {
 		limit, _ := strconv.Atoi(c.Query("limit"))
 		start, _ := strconv.Atoi(c.Query("start"))
 		var listuser []models.User
@@ -229,6 +229,7 @@ func DeleteUser(c *gin.Context) {
 func CreateUserSubscribers(c *gin.Context) {
 	var sub = models.Subscriber{}
 	var errSub error
+	var err error
 	//var json interface{}
 
 	if len(c.Param("userid")) == 0 || len(c.Param("toid")) == 0 {
@@ -236,8 +237,14 @@ func CreateUserSubscribers(c *gin.Context) {
 		return
 	}
 
-	sub.FromID, _ = strconv.Atoi(c.Param("userid"))
-	sub.ToID, _ = strconv.Atoi(c.Param("toid"))
+	if sub.FromID, err = strconv.Atoi(c.Param("userid")); err != nil {
+		libs.ResponseJSON(c, 400, 100, "Invalid parameter: userid", nil)
+		return
+	}
+	if sub.ToID, err = strconv.Atoi(c.Param("toid")); err != nil {
+		libs.ResponseJSON(c, 400, 100, "Invalid parameter: toid", nil)
+		return
+	}
 	if exist1, _ := services.CheckExistNodeWithID(sub.FromID); exist1 != true {
 		libs.ResponseJSON(c, 400, 110, "Invalid user id", nil)
 		return
@@ -304,6 +311,23 @@ func DeleteUserSubscribers(c *gin.Context) {
 	if errdel != nil {
 		libs.ResponseServerErrorJSON(c)
 		fmt.Printf("ERR: %s", errdel.Error())
+	}
+
+}
+
+//FindUser func
+func FindUser(c *gin.Context) {
+	name := c.Query("name")
+	if len(name) == 0 {
+		libs.ResponseBadRequestJSON(c, 101, "Missing a few fields: name")
+		return
+	}
+	userList, errFind := services.FindUserByUsernameAndFullName(name)
+	if errFind != nil {
+		libs.ResponseServerErrorJSON(c)
+		fmt.Printf("ERROR FindUserByUsernameAndFullName: %s", errFind.Error())
+	} else {
+		libs.ResponseEntityListJSON(c, 1, "User list found", userList, nil, len(userList))
 	}
 
 }

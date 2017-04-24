@@ -22,6 +22,7 @@ func main() {
 	// Work for User
 	authorized := router.Group("/", apiv1.AuthHandler)
 	{
+		authorized.GET("/find_user", apiv1.FindUser)
 		RUser := authorized.Group("/users")
 		{
 			// user
