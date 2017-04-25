@@ -10,6 +10,7 @@ var (
 )
 
 func main() {
+
 	router := gin.Default()
 	// Work for login
 	router.POST("/login", apiv1.Login)                             // login method

@@ -376,7 +376,9 @@ func FindUser(c *gin.Context) {
 		libs.ResponseBadRequestJSON(c, 101, "Missing a few fields: name")
 		return
 	}
-	userList, errFind := services.FindUserByUsernameAndFullName(name)
+	token := c.Request.Header.Get("token")
+	id, _ := GetUserIDFromToken(token)
+	userList, errFind := services.FindUserByUsernameAndFullName(id, name)
 	if errFind != nil {
 		libs.ResponseServerErrorJSON(c)
 		fmt.Printf("ERROR FindUserByUsernameAndFullName: %s", errFind.Error())

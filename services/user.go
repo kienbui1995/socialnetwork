@@ -75,6 +75,61 @@ func CreateUser(user models.User) (int, error) {
 	return 0, err
 }
 
+// CreateUserTest func
+func CreateUserTest(user models.User) (int, error) {
+
+	node := neoism.Node{}
+	if len(user.About) > 0 {
+		node.SetProperty("about", user.About)
+	}
+	if len(user.Avatar) > 0 {
+		node.SetProperty("avatar", user.Avatar)
+	}
+	if len(user.Birthday) > 0 {
+		node.SetProperty("birthday", user.Birthday)
+	}
+	if len(user.Cover) > 0 {
+		node.SetProperty("cover", user.Cover)
+	}
+	if len(user.Email) > 0 {
+		node.SetProperty("email", user.Email)
+	}
+	if len(user.FacebookID) > 0 {
+		node.SetProperty("facebook_id", user.FacebookID)
+	}
+	if len(user.FacebookToken) > 0 {
+		node.SetProperty("facebook_token", user.FacebookToken)
+	}
+	if len(user.FirstName) > 0 {
+		node.SetProperty("first_name", user.FirstName)
+	}
+	if len(user.FullName) > 0 {
+		node.SetProperty("full_name", user.FullName)
+	}
+	if len(user.Gender) > 0 {
+		node.SetProperty("gender", user.Gender)
+	}
+	if len(user.LastName) > 0 {
+		node.SetProperty("last_name", user.LastName)
+	}
+	if len(user.MiddleName) > 0 {
+		node.SetProperty("middle_name", user.MiddleName)
+	}
+	type resStruct struct {
+		ID int `json:"ID"`
+	}
+	res := []resStruct{}
+	cq := neoism.CypherQuery{
+
+		Result: &res,
+	}
+	err := conn.Cypher(&cq)
+	if err == nil {
+		return res[0].ID, nil
+	}
+	return 0, err
+}
+
 // GetAllUser func
 func GetAllUser() ([]models.User, error) {
 	return GetAllUserWithSkipLimit(0, 25)
@@ -425,15 +480,16 @@ func DeleteRecoveryProperty(userid int) (bool, error) {
 }
 
 //FindUserByUsernameAndFullName func
-func FindUserByUsernameAndFullName(s string) ([]models.SUser, error) {
+func FindUserByUsernameAndFullName(userid int, s string) ([]models.SUser, error) {
 	stmt := `
 		 OPTIONAL MATCH(u:User) WHERE u.username CONTAINS {s}  OR u.full_name  CONTAINS {s}
 		 RETURN ID(u) as id, u.username as username, u.avatar as avatar, u.full_name as full_name,
-		 exists((:User{username:"admin"})-[:FOLLOW]->(u)) as is_followed
+		 exists((:User{username:{userid}})-[:FOLLOW]->(u)) as is_followed
 	`
 	res := []models.SUser{}
 	params := neoism.Props{
-		"s": s,
+		"userid": userid,
+		"s":      s,
 	}
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
