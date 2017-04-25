@@ -482,9 +482,10 @@ func DeleteRecoveryProperty(userid int) (bool, error) {
 //FindUserByUsernameAndFullName func
 func FindUserByUsernameAndFullName(userid int, s string) ([]models.SUser, error) {
 	stmt := `
+		 MATCH(a:User) where ID(a)={userid}
 		 OPTIONAL MATCH(u:User) WHERE u.username CONTAINS {s}  OR u.full_name  CONTAINS {s}
 		 RETURN ID(u) as id, u.username as username, u.avatar as avatar, u.full_name as full_name,
-		 exists((:User{username:{userid}})-[:FOLLOW]->(u)) as is_followed
+		 exists((a)-[:FOLLOW]->(u)) as is_followed
 	`
 	res := []models.SUser{}
 	params := neoism.Props{
