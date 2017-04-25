@@ -164,7 +164,17 @@ func GetAllUserWithSkipLimit(skip int, limit int) ([]models.User, error) {
 func GetUser(userid int) (models.User, error) {
 	var user = models.User{}
 	stmt := `
-	MATCH (u:User) WHERE ID(u) = {userId} RETURN u.avatar as Avatar, ID(u) as ID, u.username as Username, u.password as Password, u.email as email, u.status as Status LIMIT 25;
+	MATCH (u:User)
+	WHERE ID(u) = {userId}
+	RETURN
+	u.avatar as avatar, u.about as about, u.birthday as birthday, u.gender as gender, u.cover as cover,
+	ID(u) as ID,
+	u.username as username,
+	u.full_name as full_name, u.first_name as first_name, u.last_name as last_name,
+	u.email as email, u.status as Status,
+	u.followers as followers, u.followings as followings, u.posts as posts,
+	u.created_at as created_at, u.updated_at as updated_at
+	LIMIT 25;
 	`
 	params := neoism.Props{"userId": userid}
 
