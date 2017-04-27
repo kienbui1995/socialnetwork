@@ -1,64 +1,124 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	apiv1 "github.com/kienbui1995/socialnetwork/controllers/api/v1"
-)
+	"strconv"
 
-var (
-	neo4jURL = "Bolt://neo4j:tlis2016@localhost:7687"
+	"github.com/gin-gonic/gin"
+	"github.com/kienbui1995/socialnetwork/configs"
+	apiv1 "github.com/kienbui1995/socialnetwork/controllers/api/v1"
 )
 
 func main() {
 
 	router := gin.Default()
+
+	// Func Test
+	router.POST("/test/users", apiv1.CreateUserTest)
+
 	// Work for login
-	router.POST("/login", apiv1.Login)                             // login method
-	router.POST("/login_facebook", apiv1.LoginViaFacebook)         // login via facebook
-	router.POST("/logout", apiv1.Logout)                           // logout method
-	router.POST("/sign_up", apiv1.SignUp)                          // create a user
-	router.POST("/forgot_password", apiv1.ForgotPassword)          // forgot password method
-	router.POST("/verify_recovery_code", apiv1.VerifyRecoveryCode) //verify recovery code method
-	router.PUT("/renew_password", apiv1.RenewPassword)             //renew password after verify_recovery_code
+	router.POST("/login", apiv1.Login)                             // login method1
+	router.POST("/login_facebook", apiv1.LoginViaFacebook)         // login via facebook2
+	router.POST("/logout", apiv1.Logout)                           // logout method3
+	router.POST("/sign_up", apiv1.SignUp)                          // create a user4
+	router.POST("/forgot_password", apiv1.ForgotPassword)          // forgot password method5
+	router.POST("/verify_recovery_code", apiv1.VerifyRecoveryCode) // verify recovery code method6
+	router.PUT("/renew_password", apiv1.RenewPassword)             // renew password after verify_recovery_code7
 	// Work for User
 	authorized := router.Group("/", apiv1.AuthHandler)
 	{
-		authorized.GET("/find_user", apiv1.FindUser)
+		authorized.GET("/find_user", apiv1.FindUser) // find user by username or fullname 8
 		RUser := authorized.Group("/users")
 		{
 			// user
-			RUser.GET("", apiv1.GetUser)            // get a few user
-			RUser.GET("/:userid", apiv1.GetUser)    // get a user
-			RUser.PUT("/:userid", apiv1.UpdateUser) // update a user
+			RUser.GET("", apiv1.GetUser)            // get a few user ~needfix9
+			RUser.GET("/:userid", apiv1.GetUser)    // get a user  ~needfix10
+			RUser.PUT("/:userid", apiv1.UpdateUser) // update a user ~needfix11
 
-			RUser.DELETE("/:userid", apiv1.DeleteUser) // delete a user
+			RUser.DELETE("/:userid", apiv1.DeleteUser) // delete a user12
 
 			// user with post
-			RUser.POST("/:userid/posts", apiv1.CreatePost)           // user create a post
-			RUser.GET("/:userid/posts", apiv1.GetPost)               // get post of this post
-			RUser.GET("/:userid/posts/:postid", apiv1.GetPost)       // user get a own post
-			RUser.PUT("/:userid/posts/:postid", apiv1.UpdatePost)    // user update a own post
-			RUser.DELETE("/:userid/posts/:postid", apiv1.DeletePost) // user delete a own post
+			// RUser.POST("/:userid/posts", apiv1.CreateUserPost)     // create a post on the user's wall via userid13
+			// RUser.GET("/:userid/posts", apiv1.GetUserPost)         // get a posts list on the user's wall via userid14
+			// RUser.GET("/:userid/posts/:postid", apiv1.GetUserPost) // user get a own post15
 
 			// user witth follow
-			RUser.POST("/:userid/subscribers/:toid", apiv1.CreateUserSubscribers)
-			RUser.DELETE("/:userid/subscribers/:toid", apiv1.DeleteUserSubscribers)
-			RUser.GET("/:userid/followers", apiv1.GetFollowers)
-			RUser.GET("/:userid/subscribers", apiv1.GetSubscribers)
-			//user with login
-			// /RUser.POST("/login", apiv1.Login)
+			RUser.POST("/:userid/subscribers/:toid", apiv1.CreateUserSubscribers)   // create follow from userid to toid16
+			RUser.DELETE("/:userid/subscribers/:toid", apiv1.DeleteUserSubscribers) // unfollow follow from userid to toid17
+			RUser.GET("/:userid/followers", apiv1.GetFollowers)                     // get users list who being follow userid18
+			RUser.GET("/:userid/subscribers", apiv1.GetSubscribers)                 // get users list whose userid being follow19
+
+			// user with status
+			RUser.POST("/:userid/statuses", apiv1.CreateUserStatus)            // create a status on the user's wall via userid20
+			RUser.GET("/:userid/statuses", apiv1.GetUserStatuses)              // get a statuses list on the user's wall via userid21
+			RUser.PUT(":userid/statuses/:statusid", apiv1.UpdateUserStatus)    // update a user status via statusid
+			RUser.DELETE(":userid/statuses/:statusid", apiv1.DeleteUserStatus) // delete a user status via statusid
+
+			// RUser.GET("/:userid/home", apiv1.GetNewsFeed)           // get newsfeed of user by userid22
+			// RUser.GET("/:userid/feed", apiv1.GetUserWall)           // get post and status on the user's wall via userid23
+			// RUser.POST("/:userid/feed", apiv1.Create)               // create a post or a status on the user's wall via userid24
+			// RUser.GET("/:userid/groups", apiv1.GetUserJoinedGroups) // get a groups list that user joined via userid25
 		}
 
 		// Work for Post
-		RPost := router.Group("/posts")
+		// RPost := authorized.Group("/posts")
+		// {
+		// 	RPost.GET("", apiv1.GetPosts)             // get a posts list 26
+		// 	RPost.GET("/:postid", apiv1.GetPost)      // get a post 27
+		// 	RPost.PUT("/:postid", apiv1.UpdatePost)   // update a post 28
+		// 	RPost.POST("", apiv1.CreatePost)          // create a post 29
+		// 	RPost.DELETE(":postid", apiv1.DeletePost) // delete a post 30
+		//
+		// 	// post with comment
+		// 	RPost.GET("/:postid/comments", apiv1.GetPostComments)    // get a comments list on the post via postid 31
+		// 	RPost.POST("/:postid/comments", apiv1.CreatePostComment) // create a comment on the post via postid 32
+		//
+		// 	// post with like ~needfix can react
+		// 	RPost.GET("/:postid/likes", apiv1.GetPostLikes)      // get a users list who liked post via postid 33
+		// 	RPost.POST("/:postid/likes", apiv1.CreatePostLike)   // create a like on the post via postid 34
+		// 	RPost.DELETE("/:postid/likes", apiv1.DeletePostLike) // unlike on the post via postid 35
+		// }
+
+		// Work for Status
+		RStatus := authorized.Group("/statuses")
 		{
-			RPost.GET("", apiv1.GetPost)              // get a few post
-			RPost.GET("/:postid", apiv1.GetPost)      // get a post
-			RPost.PUT("/:postid", apiv1.UpdatePost)   // update a post
-			RPost.POST("", apiv1.CreatePost)          // create a post
-			RPost.DELETE(":postid", apiv1.DeletePost) // delete a post
+			// RStatus.GET("/:statusid", apiv1.GetStatus)        // get a status via statusid 36
+			RStatus.PUT("/:statusid", apiv1.UpdateUserStatus)    // update a user status via statusid
+			RStatus.DELETE("/:statusid", apiv1.DeleteUserStatus) // delete a user status via statusid
+
+			// status with comment
+			// RStatus.GET("/:statusid/comments", apiv1.GetStatusComments)    // get a comments list on the status via statusid 37
+			// RStatus.POST("/:statusid/comments", apiv1.CreateStatusComment) // create a comment on the status via statusid 38
+
+			// Status with like ~needfix can react
+			// RStatus.GET("/:statusid/likes", apiv1.GetStatusLikes)      // get a users list who liked status via statusid 39
+			// RStatus.POST("/:statusid/likes", apiv1.CreateStatusLike)   // create a like on the status via statusid 40
+			// RStatus.DELETE("/:statusid/likes", apiv1.DeleteStatusLike) // unlike on the status via statusid 41
 		}
+
+		// Work for Comment
+		// RComment := authorized.Group("/comments")
+		// {
+		// 	RComment.GET("/:commentid", apiv1.GetComment) // get a comment via commentid 42
+		//
+		// 	// Comment with like ~needfix can react
+		// 	RComment.GET("/:commentid/likes", apiv1.GetCommentLikes)      // get a users list who liked stacommenttus via commentid 43
+		// 	RComment.POST("/:commentid/likes", apiv1.CreateCommentLike)   // create a like on the comment via commentid 44
+		// 	RComment.DELETE("/:commentid/likes", apiv1.DeleteCommentLike) // unlike on the comment via commentid 45
+		// }
+
+		// Work for Group
+		// RGroup := authorized.Group("/groups")
+		// {
+		// 	// user with post
+		// 	RGroup.GET("/:groupid", apiv1.GetGroup)              // get info of a group by groupid 46
+		// 	RGroup.POST("/:groupid/feed", apiv1.CreateGroupPost) // create a post or a status to a group by groupid 47
+		// 	RGroup.GET("/:groupid/feed", apiv1.GetGroupPosts)    // get a posts list in a group by groupid 48
+		// 	RGroup.GET("/:groupid/members", apiv1.GetMembers)    // get a users list in a group by groupid 49
+		// 	RGroup.PUT("/:groupid", apiv1.UpdatePost)            // update info of a group by groupid 50
+		// 	RGroup.DELETE("/:groupid", apiv1.DeleteGroup)        // delete a group by groupid 51
+		// }
+
 	}
-	router.Run(":8080")
+	router.Run(":" + strconv.Itoa(configs.APIPort))
 
 }

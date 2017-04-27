@@ -79,31 +79,25 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
-	// errorDetails := []libs.ErrorDetail{}
 	if govalidator.IsByteLength(user.Username, 3, 15) == false {
-		// errorDetails = append(errorDetails, libs.NewErrorDetail(382, "Please enter a valid username."))
 		libs.ResponseErrorJSON(c, libs.NewErrorDetail(382, "Please enter a valid username."))
 		return
 	}
 	if govalidator.IsEmail(user.Email) == false {
-		// errorDetails = append(errorDetails, libs.NewErrorDetail(385, "Please enter a valid email address."))
 		libs.ResponseErrorJSON(c, libs.NewErrorDetail(385, "Please enter a valid email address."))
 		return
 	}
-	fmt.Printf("\nUsername:%s", user.Username)
+
 	if exist, _ := services.CheckExistUsername(user.Username); exist == true {
 		libs.ResponseErrorJSON(c, libs.NewErrorDetail(376, "The login credential you provided belongs to an existing account"))
 		return
 	}
-	fmt.Printf("\nEmail:%s", user.Email)
+
 	if exist, _ := services.CheckExistEmail(user.Email); exist == true {
 		libs.ResponseErrorJSON(c, libs.NewErrorDetail(371, "The email address you provided belongs to an existing account"))
 		return
 	}
-	// if len(errorDetails) != 0 {
-	// 	libs.ResponseErrorsJSON(c, libs.Errors{Code: 387, Message: "There was an error with your registration. Please try registering again.", ErrorDetails: errorDetails})
-	// 	return
-	// }
+
 	user.Status = 0
 	activecode := libs.RandStringBytes(6)
 	go func() {
@@ -113,20 +107,23 @@ func SignUp(c *gin.Context) {
 
 	}()
 	// /fmt.Printf("%v", user.EmailActive)
-	user.UserID, errUser = services.CreateUser(user)
+	user.UserID, errUser = services.CreateUserTest(user) //needfix
 	if errUser != nil {
 		libs.ResponseJSON(c, 400, 387, "There was an error with your registration. Please try registering again: "+errUser.Error(), nil)
 		return
 
 	}
 
-	sender := libs.NewSender("kien.laohac@gmail.com", "ytanyybkizzygqjk")
-	var email []string
-	email = append(email, user.Email)
-	linkActive := "<a href='localhost:8080/user/" + string(user.UserID) + "?email_active=" + activecode + "'>Active</a>"
-	go sender.SendMail(email, fmt.Sprintf("Active user %s on TLSEN", user.Username), fmt.Sprintf("Content-Type: text/html; charset=UTF-8\n\ncode: %s OR active via link: %s", activecode, linkActive))
+	// pause func send mail active
+	// go func() {
+	// 	sender := libs.NewSender("kien.laohac@gmail.com", "ytanyybkizzygqjk")
+	// 	var email []string
+	// 	email = append(email, user.Email)
+	// 	linkActive := "<a href='localhost:8080/user/" + string(user.UserID) + "?email_active=" + activecode + "'>Active</a>"
+	// 	sender.SendMail(email, fmt.Sprintf("Active user %s on TLSEN", user.Username), fmt.Sprintf("Content-Type: text/html; charset=UTF-8\n\ncode: %s OR active via link: %s", activecode, linkActive))
+	// }()
 
-	libs.ResponseCreatedJSON(c, 1, "Create user successful!", user.UserID)
+	libs.ResponseCreatedJSON(c, 1, "Create user successful!", map[string]interface{}{"id": user.UserID})
 
 }
 
@@ -147,7 +144,7 @@ func CreateUser(c *gin.Context) {
 		return
 
 	}
-	libs.ResponseCreatedJSON(c, 1, "Create user successful!", user.UserID)
+	libs.ResponseCreatedJSON(c, 1, "Create user successful!", map[string]interface{}{"id": user.UserID})
 
 }
 
@@ -267,6 +264,7 @@ func CreateUserSubscribers(c *gin.Context) {
 		return
 
 	}
+
 	libs.ResponseCreatedJSON(c, 1, "Create subscriber successful!", sub)
 }
 
@@ -357,7 +355,19 @@ func DeleteUserSubscribers(c *gin.Context) {
 	}
 
 	delsub, errdel := services.DeleteUserSubscriber(sub.FromID, sub.ToID)
-	if errdel != nil && delsub == true {
+	if errdel == nil && delsub == true {
+
+		// auto Decrease Followers And Followings
+		go func() {
+			ok, err := services.DecreaseFollowersAndFollowings(sub.FromID, sub.ToID)
+			if err != nil {
+				fmt.Printf("ERROR in DecreaseFollowersAndFollowings service: %s", err.Error())
+			}
+			if ok != true {
+				fmt.Printf("ERROR in DecreaseFollowersAndFollowings service")
+			}
+		}()
+
 		libs.ResponseSuccessJSON(c, 1, "Delete subscriber successful", nil)
 		return
 
@@ -385,5 +395,26 @@ func FindUser(c *gin.Context) {
 	} else {
 		libs.ResponseEntityListJSON(c, 1, "User list found", userList, nil, len(userList))
 	}
+
+}
+
+// CreateUserTest func to create a new user
+func CreateUserTest(c *gin.Context) {
+	var user = models.User{}
+	var errUser error
+	//var json interface{}
+
+	if c.Bind(&user) != nil {
+		libs.ResponseJSON(c, 400, 100, "Invalid parameter: "+c.Bind(&user).Error(), nil)
+		return
+	}
+
+	user.UserID, errUser = services.CreateUserTest(user)
+	if errUser != nil {
+		libs.ResponseJSON(c, 400, -1, errUser.Error(), nil)
+		return
+
+	}
+	libs.ResponseCreatedJSON(c, 1, "Create user successful!", map[string]interface{}{"id": user.UserID})
 
 }

@@ -13,8 +13,8 @@ type User struct {
 	Avatar        string `json:"avatar,omitempty"`   //Direct URL for the user's avatar image
 	Cover         string `json:"cover,omitempty"`    //Direct URL for the user's cover image
 	Status        int    `json:"status,omitempty"`   //1: Active; 0: DeActive
-	UpdatedAt     string `json:"updated_at,omitempty"`
-	CreatedAt     string `json:"created_at,omitempty"`
+	UpdatedAt     int    `json:"updated_at,omitempty"`
+	CreatedAt     int    `json:"created_at,omitempty"`
 	FacebookToken string `json:"facebook_token,omitempty"`
 	Posts         int    `json:"posts"`
 	Followers     int    `json:"followers"`

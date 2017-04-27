@@ -77,57 +77,71 @@ func CreateUser(user models.User) (int, error) {
 
 // CreateUserTest func
 func CreateUserTest(user models.User) (int, error) {
+	p := neoism.Props{
+		"username":     user.Account.Username,
+		"password":     user.Account.Password,
+		"email":        user.Account.Email,
+		"is_vertified": user.Account.IsVertified,
+	}
 
-	node := neoism.Node{}
 	if len(user.About) > 0 {
-		node.SetProperty("about", user.About)
+		p["about"] = user.About
 	}
 	if len(user.Avatar) > 0 {
-		node.SetProperty("avatar", user.Avatar)
+		p["avatar"] = user.Avatar
 	}
 	if len(user.Birthday) > 0 {
-		node.SetProperty("birthday", user.Birthday)
+		p["birthday"] = user.Birthday
 	}
 	if len(user.Cover) > 0 {
-		node.SetProperty("cover", user.Cover)
-	}
-	if len(user.Email) > 0 {
-		node.SetProperty("email", user.Email)
+		p["cover"] = user.Cover
 	}
 	if len(user.FacebookID) > 0 {
-		node.SetProperty("facebook_id", user.FacebookID)
+		p["facebook_id"] = user.FacebookID
 	}
 	if len(user.FacebookToken) > 0 {
-		node.SetProperty("facebook_token", user.FacebookToken)
+		p["facebook_token"] = user.FacebookToken
 	}
 	if len(user.FirstName) > 0 {
-		node.SetProperty("first_name", user.FirstName)
+		p["first_name"] = user.FirstName
 	}
 	if len(user.FullName) > 0 {
-		node.SetProperty("full_name", user.FullName)
+		p["full_name"] = user.FullName
 	}
 	if len(user.Gender) > 0 {
-		node.SetProperty("gender", user.Gender)
+		p["gender"] = user.Gender
 	}
 	if len(user.LastName) > 0 {
-		node.SetProperty("last_name", user.LastName)
+		p["last_name"] = user.LastName
 	}
 	if len(user.MiddleName) > 0 {
-		node.SetProperty("middle_name", user.MiddleName)
+		p["middle_name"] = user.MiddleName
 	}
-	type resStruct struct {
-		ID int `json:"ID"`
-	}
-	res := []resStruct{}
+	p["posts"] = 0
+	p["followers"] = 0
+	p["followings"] = 0
+	p["status"] = 0
+	stmt := `
+	CREATE (u:User { props } ) SET u.created_at = TIMESTAMP() RETURN ID(u) as id
+	`
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+	params := map[string]interface{}{"props": p}
 	cq := neoism.CypherQuery{
-
-		Result: &res,
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
 	}
-	err := conn.Cypher(&cq)
-	if err == nil {
-		return res[0].ID, nil
+	if err := conn.Cypher(&cq); err != nil {
+		return -1, err
 	}
-	return 0, err
+	if len(res) > 0 {
+		if res[0].ID >= 0 {
+			return res[0].ID, nil
+		}
+	}
+	return -1, nil
 }
 
 // GetAllUser func
@@ -309,7 +323,7 @@ func CheckExistUsername(username string) (bool, error) {
 		return false, err
 	}
 
-	if len(res) != 0 {
+	if len(res) > 0 && res[0].ID > 0 {
 		return true, nil
 	}
 	return false, nil
@@ -363,7 +377,7 @@ func CheckExistFacebookID(facebookid string) (int, error) {
 
 //CreateEmailActive func
 func CreateEmailActive(mailactive models.EmailActive) error {
-	if mailactive.UserID != 0 && len(mailactive.ActiveCode) != 0 && len(mailactive.Email) != 0 {
+	if mailactive.UserID >= 0 && len(mailactive.ActiveCode) != 0 && len(mailactive.Email) != 0 {
 		stmt := fmt.Sprintf("MATCH (u:User) WHERE ID(u) = \"%d\" AND u.email = \"%s\" SET u.active_code = \"%s\"", mailactive.UserID, mailactive.Email, mailactive.ActiveCode)
 		cq := neoism.CypherQuery{
 			Statement: stmt,

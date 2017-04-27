@@ -1,131 +1,130 @@
 package v1
 
-import (
-	"fmt"
-	"strconv"
-	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/kienbui1995/socialnetwork/models"
-	"github.com/kienbui1995/socialnetwork/services"
-)
+import "github.com/gin-gonic/gin"
 
 // GetAllPost func return all post for follower
 func GetAllPost(c *gin.Context) {
 
 }
 
-// GetPost func  return info Post
-func GetPost(c *gin.Context) {
-	userid, erruid := strconv.Atoi(c.Param("userid"))
-	if erruid != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": erruid.Error(),
-		})
-	} else {
-		listpost, errlist := services.GetPostByUserID(userid)
-		if errlist != nil {
-			c.JSON(200, gin.H{
-				"code":    -1,
-				"message": errlist.Error(),
-			})
-		} else {
-			c.JSON(200, gin.H{
-				"code":    1,
-				"message": "List post by userid",
-				"data":    listpost,
-			})
-		}
-	}
+// // GetPost func  return info Post
+// func GetPost(c *gin.Context) {
+// 	userid, erruid := strconv.Atoi(c.Param("userid"))
+// 	if erruid != nil {
+// 		c.JSON(200, gin.H{
+// 			"code":    -1,
+// 			"message": erruid.Error(),
+// 		})
+// 	} else {
+// 		listpost, errlist := services.GetPostByUserID(userid)
+// 		if errlist != nil {
+// 			c.JSON(200, gin.H{
+// 				"code":    -1,
+// 				"message": errlist.Error(),
+// 			})
+// 		} else {
+// 			c.JSON(200, gin.H{
+// 				"code":    1,
+// 				"message": "List post by userid",
+// 				"data":    listpost,
+// 			})
+// 		}
+// 	}
+//
+// }
 
-}
+// // CreatePost func to create a new post
+// func CreatePost(c *gin.Context) {
+// 	var post models.Post
+// 	c.Bind(&post)
+//
+// 	userid, errid := strconv.Atoi(c.Param("userid"))
+// 	if errid != nil {
+// 		c.JSON(200, gin.H{
+// 			"code":    -1,
+// 			"message": errid.Error(),
+// 		})
+// 	}
+//
+// 	//check permisson
+// 	if id, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); id != userid || errGet != nil {
+// 		libs.ResponseAuthJSON(c, 200, "Permissions error")
+// 		return
+// 	}
+//
+// 	post, err := services.CreatePost(post, userid)
+// 	if err != nil {
+// 		c.JSON(200, gin.H{
+// 			"code":    -1,
+// 			"message": err.Error(),
+// 		})
+// 	} else {
+// 		c.JSON(200, gin.H{
+// 			"code":    1,
+// 			"message": "info a post",
+// 			"data":    post,
+// 		})
+// 	}
+// }
 
-// CreatePost func to create a new post
-func CreatePost(c *gin.Context) {
-	var post models.Post
-	c.Bind(&post)
-
-	userid, errid := strconv.Atoi(c.Param("userid"))
-	if errid != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": errid.Error(),
-		})
-	}
-	post, err := services.CreatePost(post, userid)
-	if err != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
-	} else {
-		c.JSON(200, gin.H{
-			"code":    1,
-			"message": "info a post",
-			"data":    post,
-		})
-	}
-}
-
-// UpdatePost func to update info a Post
-func UpdatePost(c *gin.Context) {
-	var (
-		err     error
-		postid  int
-		content string
-		image   string
-		status  int
-		update  bool
-	)
-	postid, err = strconv.Atoi(c.Param("postid"))
-	if err != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-			"postid":  postid,
-		})
-		return
-	}
-	content = c.PostForm("content")
-	image = c.PostForm("image")
-	status, err = strconv.Atoi(c.DefaultPostForm("status", ""))
-	if err != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
-		return
-	}
-	post := models.Post{}
-	post.PostID = postid
-	post.Content = content
-	post.Image = image
-	post.Status = status
-	post.UpdatedTime = time.Now().String()
-	fmt.Printf("%s wsssss", post.UpdatedTime)
-	update, err = services.UpdatePost(post)
-	if err != nil {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": err.Error(),
-		})
-		return
-	}
-	if update == true {
-		c.JSON(200, gin.H{
-			"code":    1,
-			"message": "Uppdate post successful",
-			"postid":  post.PostID,
-		})
-	} else {
-		c.JSON(200, gin.H{
-			"code":    -1,
-			"message": "Don't update info in DB",
-		})
-	}
-
-}
+// // UpdatePost func to update info a Post
+// func UpdatePost(c *gin.Context) {
+// 	var (
+// 		err     error
+// 		postid  int
+// 		content string
+// 		image   string
+// 		status  int
+// 		update  bool
+// 	)
+// 	postid, err = strconv.Atoi(c.Param("postid"))
+// 	if err != nil {
+// 		c.JSON(200, gin.H{
+// 			"code":    -1,
+// 			"message": err.Error(),
+// 			"postid":  postid,
+// 		})
+// 		return
+// 	}
+// 	content = c.PostForm("content")
+// 	image = c.PostForm("image")
+// 	status, err = strconv.Atoi(c.DefaultPostForm("status", ""))
+// 	if err != nil {
+// 		c.JSON(200, gin.H{
+// 			"code":    -1,
+// 			"message": err.Error(),
+// 		})
+// 		return
+// 	}
+// 	post := models.Post{}
+// 	post.PostID = postid
+// 	post.Content = content
+// 	post.Image = image
+// 	post.Status = status
+// 	post.UpdatedTime = time.Now().String()
+// 	fmt.Printf("%s wsssss", post.UpdatedTime)
+// 	update, err = services.UpdatePost(post)
+// 	if err != nil {
+// 		c.JSON(200, gin.H{
+// 			"code":    -1,
+// 			"message": err.Error(),
+// 		})
+// 		return
+// 	}
+// 	if update == true {
+// 		c.JSON(200, gin.H{
+// 			"code":    1,
+// 			"message": "Uppdate post successful",
+// 			"postid":  post.PostID,
+// 		})
+// 	} else {
+// 		c.JSON(200, gin.H{
+// 			"code":    -1,
+// 			"message": "Don't update info in DB",
+// 		})
+// 	}
+//
+// }
 
 // DeletePost func to delete a Post
 func DeletePost(c *gin.Context) {

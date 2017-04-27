@@ -11,10 +11,11 @@ import (
 //CreateUserSubscriber func
 func CreateUserSubscriber(fromid int, toid int) (int, error) {
 	stmt := `
-  MATCH(from:User) WHERE ID(from) = {fromid}
+	MATCH(from:User) WHERE ID(from) = {fromid}
   MATCH (to:User) WHERE ID(to) = {toid}
   MERGE (from)-[f:FOLLOW]->(to)
-  RETURN ID(f) AS id
+  ON CREATE SET from.followings = from.followings+1, to.followers = to.followers+1
+ 	return ID(f) as id
 	`
 	res := []struct {
 		ID int `json:"id"`
@@ -32,7 +33,7 @@ func CreateUserSubscriber(fromid int, toid int) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	if len(res) > 0 && res[0].ID > 0 {
+	if len(res) > 0 && res[0].ID >= 0 {
 		return res[0].ID, nil
 	}
 	return -1, errors.New("Don't create follow relationship")
@@ -153,8 +154,39 @@ func GetFollowers(userid int) ([]models.SUser, error) {
 		if res[0].UserID > 0 {
 			return res, nil
 		}
-		return nil, nil
+
 	}
 	return nil, nil
 
+}
+
+// DecreaseFollowersAndFollowings func
+func DecreaseFollowersAndFollowings(fromid int, toid int) (bool, error) {
+	if fromid <= 0 || toid <= 0 {
+		return false, errors.New("Error in DecreaseFollowersAndFollowings services: fromid or toid is null")
+	}
+	stmt := `MATCH (u1:User),(u2:User)
+	WHERE ID(u1)= {fromid} and ID(u2) = {toid}
+	SET u1.followings = u1.followings-1, u2.followers = u2.followers-1 RETURN ID(u1) as id1, ID(u2) as id2
+	`
+	params := neoism.Props{"fromid": fromid, "toid": toid}
+	res := []struct {
+		ID1 int `json:"id1"`
+		ID2 int `json:"id2"`
+	}{}
+
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+	if len(res) > 0 && res[0].ID1 == fromid && res[0].ID2 == toid {
+		return true, nil
+	}
+	return false, nil
 }

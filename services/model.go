@@ -4,14 +4,12 @@ import (
 	"fmt"
 
 	"github.com/jmcvetta/neoism"
+	"github.com/kienbui1995/socialnetwork/configs"
 )
 
 //neo := connector.Neoism{IP:"155.94.144.150", Port: 7474, User: "neo4j", Password: "tlis2016", Type: "http"}
 
-// URLDB CONST
-const URLDB = "http://neo4j:madawg00@localhost:7474/db/data/"
-
-var conn, _ = neoism.Connect(URLDB)
+var conn, _ = neoism.Connect(configs.URLDB)
 
 // CheckExistNode func to return quantity of nodes
 func CheckExistNode(label string, where string) (bool, error) {
