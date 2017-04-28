@@ -418,3 +418,32 @@ func CreateUserTest(c *gin.Context) {
 	libs.ResponseCreatedJSON(c, 1, "Create user successful!", map[string]interface{}{"id": user.UserID})
 
 }
+
+// GetNewsFeed func to create a new post
+func GetNewsFeed(c *gin.Context) {
+	userid, erruid := strconv.Atoi(c.Param("userid"))
+	if erruid != nil {
+		libs.ResponseBadRequestJSON(c, 110, "Invalid user id")
+	} else {
+
+		//check permisson
+		if id, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != id || errGet != nil {
+			libs.ResponseAuthJSON(c, 200, "Permissions error")
+			return
+		}
+
+		statusList, errList := services.GetNewsFeed(userid)
+		if errList == nil {
+			libs.ResponseEntityListJSON(c, 1, "Get news feed successful", statusList, nil, len(statusList))
+			return
+		}
+
+		libs.ResponseServerErrorJSON(c)
+		if errList != nil {
+			fmt.Printf("ERROR in GetNewsFeed services: %s", errList.Error())
+		} else {
+			fmt.Printf("ERROR in GetNewsFeed services: Don't get GetNewsFeed")
+		}
+
+	}
+}

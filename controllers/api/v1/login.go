@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kienbui1995/socialnetwork/configs"
 	"github.com/kienbui1995/socialnetwork/libs"
 	"github.com/kienbui1995/socialnetwork/middlewares"
 	"github.com/kienbui1995/socialnetwork/models"
@@ -24,7 +25,7 @@ func Login(c *gin.Context) {
 	}
 	defaultvalue := ""
 	if json.Username == defaultvalue || json.Password == defaultvalue || json.Device == defaultvalue {
-		libs.ResponseAuthJSON(c, 101, "Missing a few fields.")
+		libs.ResponseAuthJSON(c, configs.APIEcParamMissingField, "Missing a few fields.")
 
 		return
 	}

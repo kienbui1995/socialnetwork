@@ -43,7 +43,8 @@ func GetUserStatuses(userid int) ([]models.UserStatus, error) {
 	if userid >= 0 {
 		stmt := `
     MATCH(u:User) WHERE ID(u) = {userid}
-  	MATCH (s:Status)<-[r:POST]-(u) RETURN ID(s) AS id, s.message AS message, s.created_at AS created_at, ID(u) AS userid
+  	MATCH (s:Status)<-[r:POST]-(u) RETURN ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at, ID(u) AS userid
+		ORDER BY s.created_at
   	`
 		params := map[string]interface{}{"userid": userid}
 		res := []models.UserStatus{}
@@ -165,4 +166,32 @@ func CheckExistUserStatus(statusid int) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+// GetUserStatus func
+func GetUserStatus(statusid int) (models.UserStatus, error) {
+	if statusid >= 0 {
+
+		stmt := `
+		MATCH (s:Status)<-[:POST]-(u:User)
+		WHERE ID(s) = {statusid}
+		RETURN ID(s) as id, s.message AS  message, s.created_at AS created_at,  s.updated_at AS updated_at, ID(u) AS userid
+		`
+		params := map[string]interface{}{"statusid": statusid}
+		res := []models.UserStatus{}
+		cq := neoism.CypherQuery{
+			Statement:  stmt,
+			Parameters: params,
+			Result:     &res,
+		}
+		err := conn.Cypher(&cq)
+		if err != nil {
+			return models.UserStatus{}, err
+		}
+		if len(res) > 0 && res[0].ID == statusid {
+			return res[0], nil
+		}
+	}
+
+	return models.UserStatus{}, errors.New("ERROR in GetUserStatus service: statusid <0")
 }

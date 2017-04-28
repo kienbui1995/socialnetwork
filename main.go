@@ -53,7 +53,7 @@ func main() {
 			RUser.PUT(":userid/statuses/:statusid", apiv1.UpdateUserStatus)    // update a user status via statusid
 			RUser.DELETE(":userid/statuses/:statusid", apiv1.DeleteUserStatus) // delete a user status via statusid
 
-			// RUser.GET("/:userid/home", apiv1.GetNewsFeed)           // get newsfeed of user by userid22
+			RUser.GET("/:userid/home", apiv1.GetNewsFeed) // get newsfeed of user by userid22
 			// RUser.GET("/:userid/feed", apiv1.GetUserWall)           // get post and status on the user's wall via userid23
 			// RUser.POST("/:userid/feed", apiv1.Create)               // create a post or a status on the user's wall via userid24
 			// RUser.GET("/:userid/groups", apiv1.GetUserJoinedGroups) // get a groups list that user joined via userid25
@@ -81,7 +81,7 @@ func main() {
 		// Work for Status
 		RStatus := authorized.Group("/statuses")
 		{
-			// RStatus.GET("/:statusid", apiv1.GetStatus)        // get a status via statusid 36
+			RStatus.GET("/:statusid", apiv1.GetUserStatus)       // get a status via statusid 36
 			RStatus.PUT("/:statusid", apiv1.UpdateUserStatus)    // update a user status via statusid
 			RStatus.DELETE("/:statusid", apiv1.DeleteUserStatus) // delete a user status via statusid
 

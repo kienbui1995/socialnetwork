@@ -60,11 +60,11 @@ func GetUserStatuses(c *gin.Context) {
 		libs.ResponseBadRequestJSON(c, 110, "Invalid user id")
 	} else {
 
-		//check permisson
-		if id, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != id || errGet != nil {
-			libs.ResponseAuthJSON(c, 200, "Permissions error")
-			return
-		}
+		// //check permisson
+		// if id, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != id || errGet != nil {
+		// 	libs.ResponseAuthJSON(c, 200, "Permissions error")
+		// 	return
+		// }
 
 		statusList, errList := services.GetUserStatuses(userid)
 		if errList == nil && statusList != nil {
@@ -168,65 +168,38 @@ func DeleteUserStatus(c *gin.Context) {
 	}
 }
 
-// // UpdatePost func to update info a Post
-// func UpdatePost(c *gin.Context) {
-// 	var (
-// 		err     error
-// 		postid  int
-// 		content string
-// 		image   string
-// 		status  int
-// 		update  bool
-// 	)
-// 	postid, err = strconv.Atoi(c.Param("postid"))
-// 	if err != nil {
-// 		c.JSON(200, gin.H{
-// 			"code":    -1,
-// 			"message": err.Error(),
-// 			"postid":  postid,
-// 		})
-// 		return
-// 	}
-// 	content = c.PostForm("content")
-// 	image = c.PostForm("image")
-// 	status, err = strconv.Atoi(c.DefaultPostForm("status", ""))
-// 	if err != nil {
-// 		c.JSON(200, gin.H{
-// 			"code":    -1,
-// 			"message": err.Error(),
-// 		})
-// 		return
-// 	}
-// 	post := models.Post{}
-// 	post.PostID = postid
-// 	post.Content = content
-// 	post.Image = image
-// 	post.Status = status
-// 	post.UpdatedTime = time.Now().String()
-// 	fmt.Printf("%s wsssss", post.UpdatedTime)
-// 	update, err = services.UpdatePost(post)
-// 	if err != nil {
-// 		c.JSON(200, gin.H{
-// 			"code":    -1,
-// 			"message": err.Error(),
-// 		})
-// 		return
-// 	}
-// 	if update == true {
-// 		c.JSON(200, gin.H{
-// 			"code":    1,
-// 			"message": "Uppdate post successful",
-// 			"postid":  post.PostID,
-// 		})
-// 	} else {
-// 		c.JSON(200, gin.H{
-// 			"code":    -1,
-// 			"message": "Don't update info in DB",
-// 		})
-// 	}
-//
-// }
-//
-// // DeletePost func to delete a Post
-// func DeletePost(c *gin.Context) {
-// }
+// GetUserStatus func to delete a user status
+func GetUserStatus(c *gin.Context) {
+	statusid, errsid := strconv.Atoi(c.Param("statusid"))
+	if errsid != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid status id")
+	} else {
+
+		//check exist
+		if exist, _ := services.CheckExistUserStatus(statusid); exist != true {
+			libs.ResponseBadRequestJSON(c, 2, "No exist this object")
+			return
+		}
+
+		// userid, _ := services.GetUserIDPostedStatus(statusid)
+		//check permisson ~needfix when privacy not public
+		// if id, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != id || errGet != nil {
+		// 	libs.ResponseAuthJSON(c, 200, "Permissions error")
+		// 	return
+		// }
+
+		status, errGet := services.GetUserStatus(statusid)
+		if errGet == nil && status.ID == statusid {
+			libs.ResponseSuccessJSON(c, 1, "Get user status successful", status)
+			return
+		}
+
+		libs.ResponseServerErrorJSON(c)
+		if errGet != nil {
+			fmt.Printf("ERROR in GetUserStatus services: %s", errGet.Error())
+		} else {
+			fmt.Printf("ERROR in GetUserStatus services: Don't get User Status")
+		}
+
+	}
+}

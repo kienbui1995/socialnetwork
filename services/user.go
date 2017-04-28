@@ -533,3 +533,30 @@ func FindUserByUsernameAndFullName(userid int, s string) ([]models.SUser, error)
 	}
 	return nil, nil
 }
+
+//GetNewsFeed func
+func GetNewsFeed(userid int) ([]models.UserStatus, error) {
+	stmt := `
+	MATCH(u:User) WHERE ID(u)= {userid}
+	MATCH(u)-[:FOLLOW]->(u1:User)-[:POST]->(s:Status)
+	RETURN ID(s) AS id, ID(u1) AS userid, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at
+	ORDER BY s.created_at
+	`
+	res := []models.UserStatus{}
+	params := neoism.Props{
+		"userid": userid,
+	}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) > 0 && res[0].ID >= 0 {
+		return res, nil
+	}
+	return nil, nil
+}
