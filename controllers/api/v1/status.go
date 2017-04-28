@@ -67,7 +67,7 @@ func GetUserStatuses(c *gin.Context) {
 		// }
 
 		statusList, errList := services.GetUserStatuses(userid)
-		if errList == nil && statusList != nil {
+		if errList == nil {
 			libs.ResponseEntityListJSON(c, 1, "User Statuses List", statusList, nil, len(statusList))
 			return
 		}
