@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kienbui1995/socialnetwork/configs"
 	"github.com/kienbui1995/socialnetwork/libs"
-	"github.com/kienbui1995/socialnetwork/models"
 	"github.com/kienbui1995/socialnetwork/services"
 )
 
@@ -25,6 +25,7 @@ func CreateUserStatus(c *gin.Context) {
 
 		json := struct {
 			Message string `json:"message" valid:"nonzero"`
+			Privacy int    `json:"privacy"`
 		}{}
 		if errBind := c.Bind(&json); errBind != nil {
 			libs.ResponseJSON(c, 400, 100, "Invalid parameter: "+errBind.Error(), nil)
@@ -36,10 +37,10 @@ func CreateUserStatus(c *gin.Context) {
 			libs.ResponseJSON(c, 400, 100, "Missing a few fields:  Message is NULL", nil)
 			return
 		}
-		status := models.UserStatus{UserID: userid, Message: json.Message}
-		status.ID, erruid = services.CreateUserStatus(status)
-		if erruid == nil && status.ID >= 0 {
-			libs.ResponseSuccessJSON(c, 1, "Create user status successful", map[string]interface{}{"id": status.ID})
+
+		statusID, errsid := services.CreateUserStatus(userid, json.Message, json.Privacy, 1)
+		if errsid == nil && statusID >= 0 {
+			libs.ResponseSuccessJSON(c, 1, "Create user status successful", map[string]interface{}{"id": statusID})
 			return
 		}
 		libs.ResponseServerErrorJSON(c)
@@ -66,7 +67,21 @@ func GetUserStatuses(c *gin.Context) {
 		// 	return
 		// }
 
-		statusList, errList := services.GetUserStatuses(userid)
+		sort := c.DefaultQuery("sort", "+created_at")
+
+		orderby := libs.ConvertSort(sort)
+		skip, errSkip := strconv.Atoi(c.DefaultQuery("skip", "0"))
+		if errSkip != nil {
+			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSkip.Error())
+			return
+		}
+		limit, errLimit := strconv.Atoi(c.DefaultQuery("limit", "25"))
+		if errLimit != nil {
+			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errLimit.Error())
+			return
+		}
+
+		statusList, errList := services.GetUserStatuses(userid, orderby, skip, limit)
 		if errList == nil {
 			libs.ResponseEntityListJSON(c, 1, "User Statuses List", statusList, nil, len(statusList))
 			return
@@ -104,6 +119,8 @@ func UpdateUserStatus(c *gin.Context) {
 
 		json := struct {
 			Message string `json:"message" valid:"nonzero"`
+			Privacy int    `json:"privacy"`
+			Status  int    `json:"status"`
 		}{}
 		if errBind := c.Bind(&json); errBind != nil {
 			libs.ResponseJSON(c, 400, 100, "Invalid parameter: "+errBind.Error(), nil)
@@ -116,7 +133,7 @@ func UpdateUserStatus(c *gin.Context) {
 			return
 		}
 
-		status, errUpdate := services.UpdateUserStatus(statusid, json.Message)
+		status, errUpdate := services.UpdateUserStatus(statusid, json.Message, json.Privacy, json.Status)
 		if errUpdate == nil && status.CreatedAt > 0 {
 			libs.ResponseSuccessJSON(c, 1, "Update user status successful", status)
 			return

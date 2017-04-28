@@ -2,22 +2,25 @@ package services
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/jmcvetta/neoism"
 	"github.com/kienbui1995/socialnetwork/models"
 )
 
 // CreateUserStatus func
-func CreateUserStatus(status models.UserStatus) (int, error) {
-	if status.UserID >= 0 && len(status.Message) > 0 {
+func CreateUserStatus(userid int, message string, privacy int, status int) (int, error) {
+	if userid >= 0 && len(message) > 0 {
 		p := neoism.Props{
-			"message": status.Message,
+			"message": message,
+			"privacy": privacy,
+			"status":  status,
 		}
 		stmt := `
     MATCH(u:User) WHERE ID(u) = {fromid}
   	CREATE (s:Status:Post { props } )<-[r:POST]-(u) SET s.created_at = TIMESTAMP() RETURN ID(s) as id
   	`
-		params := map[string]interface{}{"props": p, "fromid": status.UserID}
+		params := map[string]interface{}{"props": p, "fromid": userid}
 		res := []struct {
 			ID int `json:"id"`
 		}{}
@@ -39,41 +42,56 @@ func CreateUserStatus(status models.UserStatus) (int, error) {
 }
 
 // GetUserStatuses func
-func GetUserStatuses(userid int) ([]models.UserStatus, error) {
-	if userid >= 0 {
-		stmt := `
-    MATCH(u:User) WHERE ID(u) = {userid}
-  	MATCH (s:Status)<-[r:POST]-(u) RETURN ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at, ID(u) AS userid
-		ORDER BY s.created_at
-  	`
-		params := map[string]interface{}{"userid": userid}
-		res := []models.UserStatus{}
-		cq := neoism.CypherQuery{
-			Statement:  stmt,
-			Parameters: params,
-			Result:     &res,
-		}
-		err := conn.Cypher(&cq)
-		if err != nil {
-			return nil, err
-		}
-		if len(res) > 0 && res[0].ID >= 0 {
-			return res, nil
-		}
+func GetUserStatuses(userid int, orderby string, skip int, limit int) ([]models.UserStatus, error) {
+
+	stmt := fmt.Sprintf(`
+	    MATCH(u:User) WHERE ID(u) = {userid}
+	  	MATCH (s:Status)<-[r:POST]-(u)
+			RETURN
+				ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at,
+				case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+				ID(u) AS userid, u.avatar AS avatar, u.full_name AS full_name, u.username AS username
+			ORDER BY %s
+			SKIP {skip}
+			LIMIT {limit}
+	  	`, orderby)
+	params := map[string]interface{}{
+		"userid": userid,
+		"skip":   skip,
+		"limit":  limit,
+	}
+	res := []models.UserStatus{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	fmt.Print(cq)
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) > 0 && res[0].ID >= 0 {
+
+		return res, nil
 
 	}
 	return nil, nil
 }
 
 // UpdateUserStatus func
-func UpdateUserStatus(statusid int, message string) (models.UserStatus, error) {
+func UpdateUserStatus(statusid int, message string, privacy int, status int) (models.UserStatus, error) {
 	if statusid >= 0 {
 		stmt := `
   	MATCH (s:Status)<-[r:POST]-(u:User)
-    WHERE ID(s) = {statusid}  SET s.message = {message}, s.updated_at = TIMESTAMP()
-    RETURN ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at, ID(u) AS userid
+    WHERE ID(s) = {statusid}
+		SET s.message = {message}, s.privacy = {privacy}, s.updated_at = TIMESTAMP(), s.status = {status}
+    RETURN
+			ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at,
+			case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+			ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar
   	`
-		params := map[string]interface{}{"statusid": statusid, "message": message}
+		params := map[string]interface{}{"statusid": statusid, "message": message, "privacy": privacy, "status": status}
 		res := []models.UserStatus{}
 		cq := neoism.CypherQuery{
 			Statement:  stmt,
@@ -175,7 +193,10 @@ func GetUserStatus(statusid int) (models.UserStatus, error) {
 		stmt := `
 		MATCH (s:Status)<-[:POST]-(u:User)
 		WHERE ID(s) = {statusid}
-		RETURN ID(s) as id, s.message AS  message, s.created_at AS created_at,  s.updated_at AS updated_at, ID(u) AS userid
+		RETURN
+			ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at,
+			case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+			ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar
 		`
 		params := map[string]interface{}{"statusid": statusid}
 		res := []models.UserStatus{}

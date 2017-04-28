@@ -7,6 +7,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
+	"github.com/kienbui1995/socialnetwork/configs"
 	"github.com/kienbui1995/socialnetwork/libs"
 	"github.com/kienbui1995/socialnetwork/models"
 	"github.com/kienbui1995/socialnetwork/services"
@@ -432,7 +433,20 @@ func GetNewsFeed(c *gin.Context) {
 			return
 		}
 
-		statusList, errList := services.GetNewsFeed(userid)
+		sort := c.DefaultQuery("sort", "+created_at")
+		orderby := libs.ConvertSort(sort)
+		skip, errSkip := strconv.Atoi(c.DefaultQuery("skip", "0"))
+		if errSkip != nil {
+			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSkip.Error())
+			return
+		}
+		limit, errLimit := strconv.Atoi(c.DefaultQuery("limit", "25"))
+		if errLimit != nil {
+			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errLimit.Error())
+			return
+		}
+
+		statusList, errList := services.GetNewsFeed(userid, orderby, skip, limit)
 		if errList == nil {
 			libs.ResponseEntityListJSON(c, 1, "Get news feed successful", statusList, nil, len(statusList))
 			return

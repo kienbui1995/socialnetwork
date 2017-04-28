@@ -535,16 +535,23 @@ func FindUserByUsernameAndFullName(userid int, s string) ([]models.SUser, error)
 }
 
 //GetNewsFeed func
-func GetNewsFeed(userid int) ([]models.UserStatus, error) {
-	stmt := `
+func GetNewsFeed(userid int, orderby string, skip int, limit int) ([]models.UserStatus, error) {
+	stmt := fmt.Sprintf(`
 	MATCH(u:User) WHERE ID(u)= {userid}
 	MATCH(u)-[:FOLLOW]->(u1:User)-[:POST]->(s:Status)
-	RETURN ID(s) AS id, ID(u1) AS userid, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at
-	ORDER BY s.created_at
-	`
+	RETURN
+		ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at,
+		case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+		ID(u1) AS userid, u1.full_name AS full_name, u1.avatar AS avatar, u1.username AS username
+	ORDER BY %s
+	SKIP {skip}
+	LIMIT {limit}
+	`, orderby)
 	res := []models.UserStatus{}
-	params := neoism.Props{
+	params := map[string]interface{}{
 		"userid": userid,
+		"skip":   skip,
+		"limit":  limit,
 	}
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
