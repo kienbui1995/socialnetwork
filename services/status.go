@@ -162,28 +162,7 @@ func GetUserIDPostedStatus(statusid int) (int, error) {
 
 // CheckExistUserStatus func
 func CheckExistUserStatus(statusid int) (bool, error) {
-	if statusid >= 0 {
-		stmt := `
-  	MATCH (s:Status) WHERE ID(s) = {statusid} RETURN ID(s) as id
-  	`
-		params := map[string]interface{}{"statusid": statusid}
-		res := []struct {
-			ID int `json:"id"`
-		}{}
-		cq := neoism.CypherQuery{
-			Statement:  stmt,
-			Parameters: params,
-			Result:     &res,
-		}
-		err := conn.Cypher(&cq)
-		if err != nil {
-			return false, err
-		}
-		if len(res) > 0 && res[0].ID == statusid {
-			return true, nil
-		}
-	}
-	return false, nil
+	return CheckExistNodeWithID(statusid)
 }
 
 // GetUserStatus func
@@ -215,4 +194,85 @@ func GetUserStatus(statusid int) (models.UserStatus, error) {
 	}
 
 	return models.UserStatus{}, errors.New("ERROR in GetUserStatus service: statusid <0")
+}
+
+// CreateStatusLike func
+func CreateStatusLike(statusid int, userid int) (bool, error) {
+	stmt := `
+	MATCH(u:User) WHERE ID(u) = {userid}
+	MATCH(s:Status) WHERE ID(s) = {statusid}
+	CREATE UNIQUE (u)-[l:LIKE{created_at:TIMESTAMP()}]->(s)
+	RETURN exists(l) AS liked
+	`
+	params := map[string]interface{}{"statusid": statusid, "userid": userid}
+	res := []struct {
+		Liked bool `json:"liked"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+	if len(res) > 0 && res[0].Liked == true {
+		return true, nil
+	}
+	return false, nil
+}
+
+// GetStatusLikes func
+func GetStatusLikes(statusid int, myuserid int, orderby string, skip int, limit int) ([]models.SUser, error) {
+
+	stmt := fmt.Sprintf(`
+	MATCH (me:User) WHERE ID(me) = {myuserid}
+	MATCH (u:User)-[l:LIKE]->(s:Status) WHERE ID(s) = {statusid}
+	RETURN ID(u) AS id, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
+	exists((me)-[:FOLLOW]->(u)) AS is_followed
+	ORDER BY %s
+	SKIP {skip}
+	LIMIT {limit}
+	`, orderby)
+	params := map[string]interface{}{
+		"statusid": statusid,
+		"myuserid": myuserid,
+		"skip":     skip,
+		"limit":    limit,
+	}
+	res := []models.SUser{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) > 0 && res[0].UserID >= 0 {
+		return res, nil
+	}
+	return nil, nil
+}
+
+// DeleteStatusLike func
+func DeleteStatusLike(statusid int, userid int) (bool, error) {
+	stmt := `
+	MATCH (u:User)-[l:LIKE]->(s:Status) WHERE ID(s) = {statusid} AND ID(u) = {userid}
+	DELETE l
+	`
+	params := map[string]interface{}{"statusid": statusid, "userid": userid}
+	res := []models.SUser{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

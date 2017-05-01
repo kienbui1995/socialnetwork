@@ -86,25 +86,26 @@ func main() {
 			RStatus.DELETE("/:statusid", apiv1.DeleteUserStatus) // delete a user status via statusid
 
 			// status with comment
-			// RStatus.GET("/:statusid/comments", apiv1.GetStatusComments)    // get a comments list on the status via statusid 37
-			// RStatus.POST("/:statusid/comments", apiv1.CreateStatusComment) // create a comment on the status via statusid 38
+			RStatus.GET("/:statusid/comments", apiv1.GetStatusComments)    // get a comments list on the status via statusid 37
+			RStatus.POST("/:statusid/comments", apiv1.CreateStatusComment) // create a comment on the status via statusid 38
 
 			// Status with like ~needfix can react
-			// RStatus.GET("/:statusid/likes", apiv1.GetStatusLikes)      // get a users list who liked status via statusid 39
-			// RStatus.POST("/:statusid/likes", apiv1.CreateStatusLike)   // create a like on the status via statusid 40
-			// RStatus.DELETE("/:statusid/likes", apiv1.DeleteStatusLike) // unlike on the status via statusid 41
+			RStatus.GET("/:statusid/likes", apiv1.GetStatusLikes)      // get a users list who liked status via statusid 39
+			RStatus.POST("/:statusid/likes", apiv1.CreateStatusLike)   // create a like on the status via statusid 40
+			RStatus.DELETE("/:statusid/likes", apiv1.DeleteStatusLike) // unlike on the status via statusid 41
 		}
 
 		// Work for Comment
-		// RComment := authorized.Group("/comments")
-		// {
-		// 	RComment.GET("/:commentid", apiv1.GetComment) // get a comment via commentid 42
-		//
-		// 	// Comment with like ~needfix can react
-		// 	RComment.GET("/:commentid/likes", apiv1.GetCommentLikes)      // get a users list who liked stacommenttus via commentid 43
-		// 	RComment.POST("/:commentid/likes", apiv1.CreateCommentLike)   // create a like on the comment via commentid 44
-		// 	RComment.DELETE("/:commentid/likes", apiv1.DeleteCommentLike) // unlike on the comment via commentid 45
-		// }
+		RComment := authorized.Group("/comments")
+		{
+			// RComment.GET("/:commentid", apiv1.GetStatusComment) // get a comment via commentid 42
+			RComment.PUT("/:commentid", apiv1.UpdateStatusComment)
+
+			// Comment with like ~needfix can react
+			// 	RComment.GET("/:commentid/likes", apiv1.GetCommentLikes)      // get a users list who liked stacommenttus via commentid 43
+			// 	RComment.POST("/:commentid/likes", apiv1.CreateCommentLike)   // create a like on the comment via commentid 44
+			// 	RComment.DELETE("/:commentid/likes", apiv1.DeleteCommentLike) // unlike on the comment via commentid 45
+		}
 
 		// Work for Group
 		// RGroup := authorized.Group("/groups")
