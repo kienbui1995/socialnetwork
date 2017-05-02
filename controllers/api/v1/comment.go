@@ -20,8 +20,12 @@ func GetStatusComments(c *gin.Context) {
 		//check permisson
 
 		sort := c.DefaultQuery("sort", "+created_at")
-
-		orderby := libs.ConvertSort(sort)
+		print(sort)
+		orderby, errSort := libs.ConvertSort(sort)
+		if errSort != nil {
+			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSort.Error())
+			return
+		}
 		skip, errSkip := strconv.Atoi(c.DefaultQuery("skip", "0"))
 		if errSkip != nil {
 			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSkip.Error())

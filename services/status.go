@@ -41,7 +41,7 @@ func CreateUserStatus(userid int, message string, privacy int, status int) (int,
 	return -1, nil
 }
 
-// GetUserStatuses func
+//GetUserStatuses func
 func GetUserStatuses(userid int, orderby string, skip int, limit int) ([]models.UserStatus, error) {
 
 	stmt := fmt.Sprintf(`
@@ -66,7 +66,6 @@ func GetUserStatuses(userid int, orderby string, skip int, limit int) ([]models.
 		Parameters: params,
 		Result:     &res,
 	}
-	fmt.Print(cq)
 	err := conn.Cypher(&cq)
 	if err != nil {
 		return nil, err
@@ -201,8 +200,9 @@ func CreateStatusLike(statusid int, userid int) (bool, error) {
 	stmt := `
 	MATCH(u:User) WHERE ID(u) = {userid}
 	MATCH(s:Status) WHERE ID(s) = {statusid}
-	CREATE UNIQUE (u)-[l:LIKE{created_at:TIMESTAMP()}]->(s)
-	RETURN exists(l) AS liked
+	MERGE(u)-[l:LIKE]->(s)
+	ON CREATE SET l.created_at = TIMESTAMP()
+	RETURN exists((u)-[l]->(s)) AS liked
 	`
 	params := map[string]interface{}{"statusid": statusid, "userid": userid}
 	res := []struct {
@@ -224,13 +224,16 @@ func CreateStatusLike(statusid int, userid int) (bool, error) {
 }
 
 // GetStatusLikes func
-func GetStatusLikes(statusid int, myuserid int, orderby string, skip int, limit int) ([]models.SUser, error) {
+func GetStatusLikes(statusid int, myuserid int, orderby string, skip int, limit int) ([]models.SUserLike, error) {
 
 	stmt := fmt.Sprintf(`
 	MATCH (me:User) WHERE ID(me) = {myuserid}
-	MATCH (u:User)-[l:LIKE]->(s:Status) WHERE ID(s) = {statusid}
-	RETURN ID(u) AS id, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
-	exists((me)-[:FOLLOW]->(u)) AS is_followed
+	MATCH (u:User)-[l:LIKE]->(s:Status)
+	WHERE ID(s) = {statusid}
+	RETURN
+		ID(u) AS id, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
+		l.created_at as liked_at,
+		exists((me)-[:FOLLOW]->(u)) AS is_followed
 	ORDER BY %s
 	SKIP {skip}
 	LIMIT {limit}
@@ -241,7 +244,7 @@ func GetStatusLikes(statusid int, myuserid int, orderby string, skip int, limit 
 		"skip":     skip,
 		"limit":    limit,
 	}
-	res := []models.SUser{}
+	res := []models.SUserLike{}
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
 		Parameters: params,

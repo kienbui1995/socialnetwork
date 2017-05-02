@@ -65,9 +65,13 @@ func GetUserStatuses(c *gin.Context) {
 		// 	return
 		// }
 
-		sort := c.DefaultQuery("sort", "+created_at")
-
-		orderby := libs.ConvertSort(sort)
+		sort := c.DefaultQuery("sort", "-created_at")
+		print(sort)
+		orderby, errSort := libs.ConvertSort(sort)
+		if errSort != nil {
+			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSort.Error())
+			return
+		}
 		skip, errSkip := strconv.Atoi(c.DefaultQuery("skip", "0"))
 		if errSkip != nil {
 			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSkip.Error())
@@ -306,9 +310,13 @@ func GetStatusLikes(c *gin.Context) {
 		//check permisson
 		userid, _ := GetUserIDFromToken(c.Request.Header.Get("token"))
 
-		sort := c.DefaultQuery("sort", "+created_at")
+		sort := c.DefaultQuery("sort", "-liked_at")
 
-		orderby := libs.ConvertSort(sort)
+		orderby, errSort := libs.ConvertSort(sort)
+		if errSort != nil {
+			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSort.Error())
+			return
+		}
 		skip, errSkip := strconv.Atoi(c.DefaultQuery("skip", "0"))
 		if errSkip != nil {
 			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSkip.Error())

@@ -29,3 +29,9 @@ type SUser struct {
 	FullName   string `json:"full_name"`
 	IsFollowed bool   `json:"is_followed"`
 }
+
+// SUserLike for a sub user with created_at like
+type SUserLike struct {
+	SUser
+	CreatedAt int `json:"liked_at"`
+}

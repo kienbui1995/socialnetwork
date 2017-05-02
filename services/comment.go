@@ -47,7 +47,7 @@ func GetStatusComments(statusid int, orderby string, skip int, limit int) ([]mod
 	WHERE ID(s) = {statusid}
 	RETURN
 		ID(c) AS id, c.message AS message, c.created_at AS created_at, c.updated_at AS updated_at ,c.status AS status,
-		ID(u) AS userid, u.username AS username. u.full_name AS full_name, u.avatar AS avatar
+		ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar
 	ORDER BY %s
 	SKIP {skip}
 	LIMIT {limit}
