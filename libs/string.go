@@ -31,12 +31,9 @@ func RandNumberBytes(n int) string {
 }
 
 //ConvertSort func return a string for Query work ORDER BY, eg: input '+created_at' output 'created_at DESC'
-func ConvertSort(input string) string {
-	if input[0] == '+' {
-		return input[1:len(input)] + " DESC"
-	} else if input[0] == '-' {
-		return input[1:len(input)] + " ASC"
-	} else {
-		return "created_at DESC"
+func ConvertSort(input string) (string, error) {
+	if input[0] == '-' {
+		return input[1:len(input)] + " DESC", nil
 	}
+	return input + " ASC", nil
 }
