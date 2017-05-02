@@ -542,7 +542,9 @@ func GetNewsFeed(userid int, orderby string, skip int, limit int) ([]models.User
 	RETURN
 		ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at,
 		case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
-		ID(u1) AS userid, u1.full_name AS full_name, u1.avatar AS avatar, u1.username AS username
+		ID(u1) AS userid, u1.full_name AS full_name, u1.avatar AS avatar, u1.username AS username,
+		s.likes AS likes, s.comments AS comments, s.shares AS shares,
+		exists((u)-[:LIKE]->(s)) AS is_liked
 	ORDER BY %s
 	SKIP {skip}
 	LIMIT {limit}
@@ -566,4 +568,62 @@ func GetNewsFeed(userid int, orderby string, skip int, limit int) ([]models.User
 		return res, nil
 	}
 	return nil, nil
+}
+
+//IncreasePosts func
+func IncreasePosts(userid int) (bool, error) {
+	stmt := `
+	MATCH (u:User)
+	WHERE ID(u)= {userid}
+	SET u.posts = u.posts+1
+	RETURN ID(u) AS id
+	`
+	params := neoism.Props{"userid": userid}
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+	if len(res) > 0 && res[0].ID == userid {
+		return true, nil
+	}
+	return false, nil
+}
+
+//DecreasePosts func
+func DecreasePosts(userid int) (bool, error) {
+	stmt := `
+	MATCH (u:User)
+	WHERE ID(u)= {userid}
+	SET u.posts = u.posts-1
+	RETURN ID(u) AS id
+	`
+	params := neoism.Props{"userid": userid}
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+	if len(res) > 0 && res[0].ID == userid {
+		return true, nil
+	}
+	return false, nil
 }

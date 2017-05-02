@@ -191,7 +191,7 @@ func UpdateUser(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"code":    1,
 			"message": "Update successful",
-			"userid":  user.UserID,
+			"data":    user,
 		})
 	} else {
 		libs.ResponseBadRequestJSON(c, 310, "User data edit failure")
@@ -267,6 +267,17 @@ func CreateUserSubscribers(c *gin.Context) {
 	}
 
 	libs.ResponseCreatedJSON(c, 1, "Create subscriber successful!", sub)
+
+	// auto Increase Followers And Followings
+	go func() {
+		ok, err := services.IncreaseFollowersAndFollowings(sub.FromID, sub.ToID)
+		if err != nil {
+			fmt.Printf("ERROR in IncreaseFollowersAndFollowings service: %s", err.Error())
+		}
+		if ok != true {
+			fmt.Printf("ERROR in IncreaseFollowersAndFollowings service")
+		}
+	}()
 }
 
 //GetFollowers func
@@ -428,7 +439,8 @@ func GetNewsFeed(c *gin.Context) {
 	} else {
 
 		//check permisson
-		if id, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != id || errGet != nil {
+		myuserid, errGet := GetUserIDFromToken(c.Request.Header.Get("token"))
+		if userid != myuserid || errGet != nil {
 			libs.ResponseAuthJSON(c, 200, "Permissions error")
 			return
 		}

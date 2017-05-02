@@ -33,5 +33,5 @@ type SUser struct {
 // SUserLike for a sub user with created_at like
 type SUserLike struct {
 	SUser
-	CreatedAt int `json:"liked_at"`
+	LikedAt int `json:"liked_at"`
 }

@@ -41,6 +41,17 @@ func CreateUserStatus(c *gin.Context) {
 		statusID, errsid := services.CreateUserStatus(userid, json.Message, json.Privacy, 1)
 		if errsid == nil && statusID >= 0 {
 			libs.ResponseSuccessJSON(c, 1, "Create user status successful", map[string]interface{}{"id": statusID})
+
+			// auto Increase Posts
+			go func() {
+				ok, err := services.IncreasePosts(userid)
+				if err != nil {
+					fmt.Printf("ERROR in IncreasePosts service: %s", err.Error())
+				}
+				if ok != true {
+					fmt.Printf("ERROR in IncreasePosts service")
+				}
+			}()
 			return
 		}
 		libs.ResponseServerErrorJSON(c)
@@ -59,11 +70,12 @@ func GetUserStatuses(c *gin.Context) {
 		libs.ResponseBadRequestJSON(c, 110, "Invalid user id")
 	} else {
 
-		// //check permisson
-		// if id, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != id || errGet != nil {
-		// 	libs.ResponseAuthJSON(c, 200, "Permissions error")
-		// 	return
-		// }
+		//check permisson
+		myuserid, errGet := GetUserIDFromToken(c.Request.Header.Get("token"))
+		if errGet != nil {
+			libs.ResponseAuthJSON(c, 200, "Permissions error")
+			return
+		}
 
 		sort := c.DefaultQuery("sort", "-created_at")
 		print(sort)
@@ -83,7 +95,7 @@ func GetUserStatuses(c *gin.Context) {
 			return
 		}
 
-		statusList, errList := services.GetUserStatuses(userid, orderby, skip, limit)
+		statusList, errList := services.GetUserStatuses(userid, myuserid, orderby, skip, limit)
 		if errList == nil {
 			libs.ResponseEntityListJSON(c, 1, "User Statuses List", statusList, nil, len(statusList))
 			return
@@ -174,6 +186,17 @@ func DeleteUserStatus(c *gin.Context) {
 		ok, errDel := services.DeleteUserStatus(statusid)
 		if errDel == nil && ok == true {
 			libs.ResponseSuccessJSON(c, 1, "Delete user status successful", nil)
+
+			// auto Decrease Posts
+			go func() {
+				ok, err := services.DecreasePosts(userid)
+				if err != nil {
+					fmt.Printf("ERROR in DecreasePosts service: %s", err.Error())
+				}
+				if ok != true {
+					fmt.Printf("ERROR in DecreasePosts service")
+				}
+			}()
 			return
 		}
 
@@ -202,12 +225,13 @@ func GetUserStatus(c *gin.Context) {
 
 		// userid, _ := services.GetUserIDPostedStatus(statusid)
 		//check permisson ~needfix when privacy not public
-		// if id, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != id || errGet != nil {
-		// 	libs.ResponseAuthJSON(c, 200, "Permissions error")
-		// 	return
-		// }
+		myuserid, errGet := GetUserIDFromToken(c.Request.Header.Get("token"))
+		if myuserid == -1 || errGet != nil {
+			libs.ResponseAuthJSON(c, 200, "Permissions error")
+			return
+		}
 
-		status, errGet := services.GetUserStatus(statusid)
+		status, errGet := services.GetUserStatus(statusid, myuserid)
 		if errGet == nil && status.ID == statusid {
 			libs.ResponseSuccessJSON(c, 1, "Get user status successful", status)
 			return
@@ -233,24 +257,20 @@ func CreateStatusLike(c *gin.Context) {
 		//check permisson
 		userid, _ := GetUserIDFromToken(c.Request.Header.Get("token"))
 
-		// // binding
-		// json := struct {
-		// 	Message string `json:"message" valid:"nonzero"`
-		// }{}
-		// if errBind := c.Bind(&json); errBind != nil {
-		// 	libs.ResponseJSON(c, 400, 100, "Invalid parameter: "+errBind.Error(), nil)
-		// 	return
-		// }
-
-		// // validation
-		// if len(json.Message) == 0 {
-		// 	libs.ResponseJSON(c, 400, 100, "Missing a few fields:  Message is NULL", nil)
-		// 	return
-		// }
-
 		liked, errLike := services.CreateStatusLike(statusid, userid)
 		if errLike == nil && liked == true {
 			libs.ResponseSuccessJSON(c, 1, "Like status successful", nil)
+
+			// auto Increase Status Likes
+			go func() {
+				ok, err := services.IncreaseStatusLikes(statusid)
+				if err != nil {
+					fmt.Printf("ERROR in IncreaseStatusLikes service: %s", err.Error())
+				}
+				if ok != true {
+					fmt.Printf("ERROR in IncreaseStatusLikes service")
+				}
+			}()
 			return
 		}
 
@@ -287,6 +307,18 @@ func DeleteStatusLike(c *gin.Context) {
 		ok, errDel := services.DeleteStatusLike(statusid, userid)
 		if errDel == nil && ok == true {
 			libs.ResponseSuccessJSON(c, 1, "Unlike successful", nil)
+
+			// auto Decrease Status Likes
+			go func() {
+				ok, err := services.DecreaseStatusLikes(statusid)
+				if err != nil {
+					fmt.Printf("ERROR in DecreaseStatusLikes service: %s", err.Error())
+				}
+				if ok != true {
+					fmt.Printf("ERROR in DecreaseStatusLikes service")
+				}
+			}()
+
 			return
 		}
 

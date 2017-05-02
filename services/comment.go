@@ -146,3 +146,27 @@ func GetUserIDWroteComment(commentid int) (int, error) {
 	}
 	return -1, nil
 }
+
+// GetStatusIDbyCommentID func
+func GetStatusIDbyCommentID(commentid int) (int, error) {
+	stmt := `
+    MATCH (c:Comment)-[:AT]->(s:Status) WHERE ID(c) = {commentid} RETURN ID(s) AS id
+  	`
+	params := map[string]interface{}{"commentid": commentid}
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return -1, err
+	}
+	if len(res) > 0 && res[0].ID >= 0 {
+		return res[0].ID, nil
+	}
+	return -1, nil
+}

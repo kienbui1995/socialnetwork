@@ -19,7 +19,7 @@ func GetStatusComments(c *gin.Context) {
 
 		//check permisson
 
-		sort := c.DefaultQuery("sort", "+created_at")
+		sort := c.DefaultQuery("sort", "-created_at")
 		print(sort)
 		orderby, errSort := libs.ConvertSort(sort)
 		if errSort != nil {
@@ -81,6 +81,18 @@ func CreateStatusComment(c *gin.Context) {
 		commentid, errcid := services.CreateStatusComment(statusid, userid, json.Message)
 		if errcid == nil && commentid >= 0 {
 			libs.ResponseCreatedJSON(c, 1, "Create status comment successful", map[string]interface{}{"id": commentid})
+
+			// auto Increase Comments
+			go func() {
+				ok, err := services.IncreaseStatusComments(statusid)
+				if err != nil {
+					fmt.Printf("ERROR in IncreaseStatusComments service: %s", err.Error())
+				}
+				if ok != true {
+					fmt.Printf("ERROR in IncreaseStatusComments service")
+				}
+			}()
+
 			return
 		}
 
@@ -157,6 +169,7 @@ func DeleteStatusComment(c *gin.Context) {
 		}
 
 		userid, _ := services.GetUserIDWroteComment(commentid)
+		statusid, _ := services.GetStatusIDbyCommentID(commentid)
 		//check permisson
 		if id, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != id || errGet != nil {
 			libs.ResponseAuthJSON(c, 200, "Permissions error")
@@ -166,6 +179,18 @@ func DeleteStatusComment(c *gin.Context) {
 		ok, errDel := services.DeleteStatusComment(commentid)
 		if errDel == nil && ok == true {
 			libs.ResponseSuccessJSON(c, 1, "Delete comment successful", nil)
+
+			// auto Decrease Status Comments
+			go func() {
+				ok, err := services.DecreaseStatusComments(statusid)
+				if err != nil {
+					fmt.Printf("ERROR in IncreaseStatusComments service: %s", err.Error())
+				}
+				if ok != true {
+					fmt.Printf("ERROR in IncreaseStatusComments service")
+				}
+			}()
+
 			return
 		}
 
