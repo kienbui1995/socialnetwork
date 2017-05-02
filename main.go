@@ -100,7 +100,7 @@ func main() {
 		{
 			// RComment.GET("/:commentid", apiv1.GetStatusComment) // get a comment via commentid 42
 			RComment.PUT("/:commentid", apiv1.UpdateStatusComment)
-
+			RComment.DELETE("/:commentid", apiv1.DeleteStatusComment) //delete a comment via commentid
 			// Comment with like ~needfix can react
 			// 	RComment.GET("/:commentid/likes", apiv1.GetCommentLikes)      // get a users list who liked stacommenttus via commentid 43
 			// 	RComment.POST("/:commentid/likes", apiv1.CreateCommentLike)   // create a like on the comment via commentid 44
