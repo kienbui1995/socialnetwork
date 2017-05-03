@@ -2,7 +2,6 @@ package v1
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/maddevsio/fcm"
 )
@@ -28,7 +27,7 @@ func PushNotification(deviceid []string) (bool, error) {
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+
 		fmt.Println("Status Code   :", response.StatusCode)
 		fmt.Println("Success       :", response.Success)
 		fmt.Println("Fail          :", response.Fail)
