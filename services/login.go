@@ -104,3 +104,31 @@ func DeleteToken(userid int, token string) (bool, error) {
 	}
 	return true, nil
 }
+
+//GetDeviceByUserID func
+func GetDeviceByUserID(userid int) (string, error) {
+
+	stmt := `
+		MATCH (u:User)-[:LOGGED_IN]->(d:Device)
+		WHERE ID(u) = {userid}
+		RETURN d.device AS device
+
+			`
+	params := map[string]interface{}{"userid": userid}
+	res := []struct {
+		Device string `json:"device"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return "", err
+	}
+	if len(res) > 0 && len(res[0].Device) > 0 {
+		return res[0].Device, nil
+	}
+	return "", nil
+}

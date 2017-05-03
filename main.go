@@ -11,7 +11,6 @@ import (
 func main() {
 
 	router := gin.Default()
-
 	// Func Test
 	router.POST("/test/users", apiv1.CreateUserTest)
 
@@ -23,6 +22,9 @@ func main() {
 	router.POST("/forgot_password", apiv1.ForgotPassword)          // forgot password method5
 	router.POST("/verify_recovery_code", apiv1.VerifyRecoveryCode) // verify recovery code method6
 	router.PUT("/renew_password", apiv1.RenewPassword)             // renew password after verify_recovery_code7
+
+	router.GET("/ws", apiv1.WsHandler)
+
 	// Work for User
 	authorized := router.Group("/", apiv1.AuthHandler)
 	{
