@@ -259,6 +259,12 @@ func CreateUserSubscribers(c *gin.Context) {
 		return
 	}
 
+	// check exist subscriber
+	if existSub, _ := services.CheckExistUserSubscriber(sub.FromID, sub.ToID); existSub == true {
+		libs.ResponseBadRequestJSON(c, 3, "Exist this object: Subscriber")
+		return
+	}
+
 	sub.SubscriberID, errSub = services.CreateUserSubscriber(sub.FromID, sub.ToID)
 	if errSub != nil {
 		libs.ResponseJSON(c, 400, -1, errSub.Error(), nil)
