@@ -537,14 +537,15 @@ func FindUserByUsernameAndFullName(userid int, s string) ([]models.SUser, error)
 //GetNewsFeed func
 func GetNewsFeed(userid int, orderby string, skip int, limit int) ([]models.News, error) {
 	stmt := fmt.Sprintf(`
-	MATCH(u:User) WHERE ID(u)= 253
+	MATCH(u:User) WHERE ID(u)= {userid}
 	MATCH(u)-[:FOLLOW]->(u1:User)-[:POST]->(s:Post)
 	WHERE s.privacy = 1 OR (s.privacy = 2 AND exists((u)-[:FOLLOW]->(u1))) OR u1 = u
 	RETURN
 		ID(s) AS id, s.message AS message, s.created_at AS created_at,
 	  case s.upload_at when null then "" else s.upload_at end AS upload_at,
 		case s.photo when null then "" else s.photo end AS photo,
-		case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+		case s.privacy when null then 1 else s.privacy end AS privacy,
+		case s.status when null then 1 else s.status end AS status,
 		ID(u1) AS userid, u1.full_name AS full_name, u1.avatar AS avatar, u1.username AS username,
 		s.likes AS likes, s.comments AS comments, s.shares AS shares,
 		exists((u)-[:LIKE]->(s)) AS is_liked
