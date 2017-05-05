@@ -81,3 +81,8 @@ const (
 	PostSharePage   = 6
 	PostShareGroup  = 7
 )
+
+//FCMToken struct
+const (
+	FCMToken = "AAAAuET9LvY:APA91bEYl-fIkcY0w7b6umgBHD4yrZnG_v9I2iY1K3EnjUfSrYvlFYIG5vrmP8wFCH8ZMZ-Kx6U6u3XIsw-AIGehs-msWXtlzOq8R_50qAiqcsrJv9WQluALvjWPqSIAPrVS2RKZ4H6V"
+)

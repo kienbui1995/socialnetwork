@@ -470,9 +470,9 @@ func GetNewsFeed(c *gin.Context) {
 			return
 		}
 
-		statusList, errList := services.GetNewsFeed(userid, orderby, skip, limit)
+		newsList, errList := services.GetNewsFeed(userid, orderby, skip, limit)
 		if errList == nil {
-			libs.ResponseEntityListJSON(c, 1, "Get news feed successful", statusList, nil, len(statusList))
+			libs.ResponseEntityListJSON(c, 1, "Get news feed successful", newsList, nil, len(newsList))
 			return
 		}
 

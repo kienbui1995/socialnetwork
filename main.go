@@ -13,7 +13,7 @@ func main() {
 	router := gin.Default()
 	// Func Test
 	router.POST("/test/users", apiv1.CreateUserTest)
-
+	router.POST("/test/push", apiv1.PushTest)
 	// Work for login
 	router.POST("/login", apiv1.Login)                             // login method1
 	router.POST("/login_facebook", apiv1.LoginViaFacebook)         // login via facebook2

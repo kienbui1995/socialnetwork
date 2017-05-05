@@ -427,7 +427,7 @@ func CheckPhotoInteractivePermission(photoid int, userid int) (bool, error) {
 		MATCH (who:User) WHERE ID(who) = {userid}
 		MATCH (u:User)-[r:UPLOAD]->(p:Photo)
 		WHERE ID(p) = {photoid}
-		RETURN exist((who)-[:FOLLOW]->(u)) AS followed, p.privacy AS privacy, u = who AS owner
+		RETURN exists((who)-[:FOLLOW]->(u)) AS followed, p.privacy AS privacy, u = who AS owner
 		`
 	params := map[string]interface{}{"userid": userid, "photoid": photoid}
 	res := []struct {

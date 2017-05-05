@@ -24,8 +24,9 @@ func CreateUserStatus(c *gin.Context) {
 		}
 
 		json := struct {
-			Message string `json:"message" valid:"nonzero"`
-			Privacy int    `json:"privacy"`
+			Message string `json:"message"`
+			Privacy string `json:"privacy"`
+			Status  string `json:"status"`
 		}{}
 		if errBind := c.Bind(&json); errBind != nil {
 			libs.ResponseJSON(c, 400, 100, "Invalid parameter: "+errBind.Error(), nil)
@@ -38,7 +39,7 @@ func CreateUserStatus(c *gin.Context) {
 			return
 		}
 
-		statusID, errsid := services.CreateUserStatus(userid, json.Message, json.Privacy, 1)
+		statusID, errsid := services.CreateUserStatus(userid, json.Message, json.Privacy, json.Status)
 		if errsid == nil && statusID >= 0 {
 			libs.ResponseSuccessJSON(c, 1, "Create user status successful", map[string]interface{}{"id": statusID})
 

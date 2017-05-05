@@ -10,7 +10,7 @@ import (
 )
 
 // CreateUserStatus func
-func CreateUserStatus(userid int, message string, privacy int, status int) (int, error) {
+func CreateUserStatus(userid int, message string, privacy string, status string) (int, error) {
 	if userid >= 0 && len(message) > 0 {
 		p := neoism.Props{
 			"message":  message,
@@ -52,7 +52,7 @@ func GetUserStatuses(userid int, myuserid int, orderby string, skip int, limit i
 	    MATCH(u:User) WHERE ID(u) = {userid}
 			MATCH(me:User) WHERE ID(me) = {myuserid}
 	  	MATCH (s:Status)<-[r:POST]-(u)
-			WHERE s.privacy = 1 OR (s.privacy = 2 AND exists(me-[:FOLLOW]->(u))) OR {userid} = {myuserid}
+			WHERE s.privacy = 1 OR (s.privacy = 2 AND exists((me)-[:FOLLOW]->(u))) OR {userid} = {myuserid}
 			RETURN
 				ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at,
 				case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
