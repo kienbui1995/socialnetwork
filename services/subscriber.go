@@ -159,6 +159,45 @@ func GetFollowers(userid int) ([]models.SUser, error) {
 
 }
 
+// GetFollowerIDs func
+func GetFollowerIDs(userid int) ([]int, error) {
+	if (userid) <= 0 {
+		return nil, errors.New("Error in get Subscribers services: userid is null")
+	}
+
+	stmt := `
+	MATCH (u:User)-[f:FOLLOW]->(user:User)
+	WHERE ID(user)= {userid}
+	RETURN ID(u) as id
+
+  	`
+	params := neoism.Props{"userid": userid}
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) > 0 {
+		var ids []int
+		for index := 0; index < len(res); index++ {
+			ids = append(ids, res[index].ID)
+		}
+		return ids, nil
+
+	}
+	return nil, nil
+
+}
+
 // IncreaseFollowersAndFollowings func
 func IncreaseFollowersAndFollowings(fromid int, toid int) (bool, error) {
 	if fromid < 0 || toid < 0 {

@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gin-gonic/gin"
 	"github.com/kienbui1995/socialnetwork/configs"
-	"github.com/kienbui1995/socialnetwork/libs"
+	"github.com/kienbui1995/socialnetwork/services"
 	"github.com/maddevsio/fcm"
 )
 
@@ -43,30 +42,24 @@ func PushNotification(deviceid []string) (bool, error) {
 }
 
 // PushTest func
-func PushTest(c *gin.Context) {
-	json := struct {
-		TokenClient string `json:"token_client"`
-		Message     string `json:"message"`
-		Title       string `json:"title"`
-	}{}
-	if errBind := c.Bind(&json); errBind != nil {
-		libs.ResponseBadRequestJSON(c, 101, "Bug push")
+func PushTest(userid int, objectid int, tittle string, message string) {
+
+	push := fcm.NewFCM(configs.FCMToken)
+	data := map[string]interface{}{
+		"id": objectid,
+	}
+	clientList, errList := services.GetDeviceByUserID(userid)
+	if errList != nil || clientList == nil {
 		return
 	}
-	push := fcm.NewFCM(configs.FCMToken)
-	data := map[string]string{
-		"id":  "noti",
-		"sum": "Happy Day",
-	}
-
 	response, err := push.Send(fcm.Message{
 		Data:             data,
-		RegistrationIDs:  []string{json.TokenClient},
+		RegistrationIDs:  clientList,
 		ContentAvailable: true,
 		Priority:         fcm.PriorityHigh,
 		Notification: fcm.Notification{
-			Title: json.Title,
-			Body:  json.Message,
+			Title: tittle,
+			Body:  message,
 			Sound: "default",
 			Badge: "113",
 		},
@@ -78,9 +71,6 @@ func PushTest(c *gin.Context) {
 		fmt.Println("Fail          :", response.Fail)
 		fmt.Println("Canonical_ids :", response.CanonicalIDs)
 		fmt.Println("Topic MsgId   :", response.MsgID)
-		libs.ResponseBadRequestJSON(c, -1, err.Error())
-		return
 	}
-	libs.ResponseJSON(c, 200, 1, "push: "+json.Message+json.Title+json.TokenClient, nil)
 
 }

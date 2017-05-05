@@ -115,7 +115,9 @@ func GetDeviceByUserID(userid int) ([]string, error) {
 
 			`
 	params := map[string]interface{}{"userid": userid}
-	res := []string{}
+	res := []struct {
+		Device string `json:"device"`
+	}{}
 
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
@@ -127,7 +129,11 @@ func GetDeviceByUserID(userid int) ([]string, error) {
 		return nil, err
 	}
 	if len(res) > 0 {
-		return res, nil
+		var devices []string
+		for index := 0; index < len(res); index++ {
+			devices = append(devices, res[index].Device)
+		}
+		return devices, nil
 	}
 	return nil, nil
 }

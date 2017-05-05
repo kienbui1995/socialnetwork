@@ -53,6 +53,18 @@ func CreateUserStatus(c *gin.Context) {
 					fmt.Printf("ERROR in IncreasePosts service")
 				}
 			}()
+
+			// push noti
+			go func() {
+				ids, errGetIDs := services.GetFollowerIDs(userid)
+				if len(ids) > 0 && errGetIDs == nil {
+					for index := 0; index < len(ids); index++ {
+						PushTest(ids[index], 1, "Một người bạn follow viết bài", json.Message)
+					}
+
+				}
+			}()
+
 			return
 		}
 		libs.ResponseServerErrorJSON(c)
