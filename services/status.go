@@ -403,3 +403,36 @@ func CheckStatusInteractivePermission(statusid int, userid int) (bool, error) {
 	return false, nil
 
 }
+
+//
+// func GetUserInterestedStatus(statusid int) ([]models.SUser, error) {
+// 	stmt := `
+// 		MATCH(u:Status) WHERE ID(s) = {statusid}
+// 		MATCH (u:User)-[:LIKE]-->(s)
+// 		WHERE  s.privacy = 1 OR (s.privacy = 2 AND exists((who)-[:FOLLOW]->(u))) OR who = u
+// 		RETURN ID(u) as id, u.username as username, u.avatar as avatar, u.full_name as full_name,
+// 		exists((a)-[:FOLLOW]->(u)) as is_followed
+// 		`
+// 	params := map[string]interface{}{"statusid": statusid}
+// 	res := []struct {
+// 		Followed bool `json:"followed"`
+// 		Privacy  int  `json:"privacy"`
+// 		Owner    bool `json:"owner"`
+// 	}{}
+// 	cq := neoism.CypherQuery{
+// 		Statement:  stmt,
+// 		Parameters: params,
+// 		Result:     &res,
+// 	}
+// 	err := conn.Cypher(&cq)
+// 	if err != nil {
+// 		return false, err
+// 	}
+// 	if len(res) > 0 {
+// 		if res[0].Privacy == configs.Public || (res[0].Followed && res[0].Privacy == configs.ShareToFollowers || res[0].Owner) {
+// 			return true, nil
+// 		}
+// 	}
+// 	return false, nil
+//
+// }

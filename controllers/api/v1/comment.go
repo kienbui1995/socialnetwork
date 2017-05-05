@@ -101,6 +101,13 @@ func CreateStatusComment(c *gin.Context) {
 				}
 			}()
 
+			// push noti
+			go func() {
+				userComment, _ := services.GetUser(userid)
+				status, _ := services.GetUserStatus(statusid, userid)
+				PushTest(status.UserID, 1, "@"+userComment.Username+" đã bình luận bài viết của bạn", status.Message)
+
+			}()
 			return
 		}
 

@@ -273,8 +273,7 @@ func CreateUserSubscribers(c *gin.Context) {
 	}
 
 	libs.ResponseCreatedJSON(c, 1, "Create subscriber successful!", sub)
-	device, _ := services.GetDeviceByUserID(sub.ToID)
-	PushNotification(device)
+
 	// auto Increase Followers And Followings
 	go func() {
 		ok, err := services.IncreaseFollowersAndFollowings(sub.FromID, sub.ToID)
@@ -284,6 +283,13 @@ func CreateUserSubscribers(c *gin.Context) {
 		if ok != true {
 			fmt.Printf("ERROR in IncreaseFollowersAndFollowings service")
 		}
+	}()
+
+	// push noti
+	go func() {
+		userFollowed, _ := services.GetUser(sub.FromID)
+		PushTest(sub.ToID, 1, "@"+userFollowed.Username+" vừa theo dõi bạn", "")
+
 	}()
 }
 

@@ -56,10 +56,10 @@ func CreateUserStatus(c *gin.Context) {
 
 			// push noti
 			go func() {
-				ids, errGetIDs := services.GetFollowerIDs(userid)
+				ids, errGetIDs := services.GetFollowers(userid)
 				if len(ids) > 0 && errGetIDs == nil {
 					for index := 0; index < len(ids); index++ {
-						PushTest(ids[index], 1, "Một người bạn follow viết bài", json.Message)
+						PushTest(ids[index].UserID, 1, "@"+ids[index].Username+" vừa cập nhật một trạng thái", json.Message)
 					}
 
 				}
@@ -289,6 +289,14 @@ func CreateStatusLike(c *gin.Context) {
 				if ok != true {
 					fmt.Printf("ERROR in IncreaseStatusLikes service")
 				}
+			}()
+
+			// push noti
+			go func() {
+				status, _ := services.GetUserStatus(statusid, userid)
+				userLiked, _ := services.GetUser(userid)
+				PushTest(status.UserID, 1, "@"+userLiked.Username+" thích trạng thái của bạn", status.Message)
+
 			}()
 			return
 		}
