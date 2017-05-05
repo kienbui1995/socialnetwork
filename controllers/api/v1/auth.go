@@ -14,7 +14,7 @@ func AuthHandler(c *gin.Context) {
 	token := c.Request.Header.Get("token")
 
 	if len(token) == 0 {
-		libs.ResponseAuthJSON(c, 404, "Missing token.")
+		libs.ResponseAuthJSON(c, 404, "Missing token")
 		return
 	}
 	ok, err := middlewares.ValidateToken(token, SuperSecretPassword)
@@ -23,7 +23,7 @@ func AuthHandler(c *gin.Context) {
 		return
 	}
 	if ok == false {
-		libs.ResponseAuthJSON(c, 405, "Invalid token.")
+		libs.ResponseAuthJSON(c, 405, "Invalid token")
 		return
 	}
 	claims, errclaim := middlewares.ExtractClaims(token, SuperSecretPassword)

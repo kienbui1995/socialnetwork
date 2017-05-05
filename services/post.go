@@ -1,31 +1,37 @@
 package services
 
-// // CreateStatus func
-// func CreateStatus(status models.UserStatus) (int, error) {
-// 	p := neoism.Props{
-// 		"message": status.Message,
-// 	}
-// 	stmt := `
-// 	CREATE (s:Status:Post { props } ) SET s.created_at = TIMESTAMP() RETURN ID(s) as id
-// 	`
-// 	params := map[string]interface{}{"props": p, "fromid": status.Profile.ID}
-// 	res := []struct {
-// 		ID int `json:"id"`
-// 	}{}
-// 	cq := neoism.CypherQuery{
-// 		Statement:  stmt,
-// 		Parameters: params,
-// 		Result:     &res,
-// 	}
-// 	err := conn.Cypher(&cq)
-// 	if err != nil {
-// 		return -1, err
-// 	}
-// 	if len(res) > 0 && res[0].ID >= 0 {
-// 		return res[0].ID, nil
-// 	}
-// 	return -1, nil
-// }
+import (
+	"github.com/jmcvetta/neoism"
+	"github.com/kienbui1995/socialnetwork/models"
+)
+
+// CreateStatus func
+func CreateStatus(post models.Post) (int, error) {
+	p := neoism.Props{
+		"message": post.Message,
+		"photo":   post.Photo,
+	}
+	stmt := `
+	CREATE (s:Status:Post { props } ) SET s.created_at = TIMESTAMP() RETURN ID(s) as id
+	`
+	params := map[string]interface{}{"props": p}
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return -1, err
+	}
+	if len(res) > 0 && res[0].ID >= 0 {
+		return res[0].ID, nil
+	}
+	return -1, nil
+}
 
 // GetFeedByUserID func
 

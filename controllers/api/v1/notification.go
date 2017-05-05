@@ -14,10 +14,10 @@ func PushNotification(deviceid []string) (bool, error) {
 		"sum": "Happy Day",
 	}
 	c := fcm.NewFCM("AAAAuET9LvY:APA91bEYl-fIkcY0w7b6umgBHD4yrZnG_v9I2iY1K3EnjUfSrYvlFYIG5vrmP8wFCH8ZMZ-Kx6U6u3XIsw-AIGehs-msWXtlzOq8R_50qAiqcsrJv9WQluALvjWPqSIAPrVS2RKZ4H6V")
-	token := "d2dvP8sjYUI:APA91bEyxraiHo-UKMeBAx-Pt7Mveih2Ydd1dddRK8lxbw-3_gZ78kz3uJWRdRTVgzlKp5_yumpn7dIjIkVoEBWbBRJZaHDJfYt2ydp0atLgfHcyQkOAuNCdEvK_uMM1bBZA7ayyx6HM"
+	//token := "d2dvP8sjYUI:APA91bEyxraiHo-UKMeBAx-Pt7Mveih2Ydd1dddRK8lxbw-3_gZ78kz3uJWRdRTVgzlKp5_yumpn7dIjIkVoEBWbBRJZaHDJfYt2ydp0atLgfHcyQkOAuNCdEvK_uMM1bBZA7ayyx6HM"
 	response, err := c.Send(fcm.Message{
 		Data:             data,
-		RegistrationIDs:  []string{token},
+		RegistrationIDs:  deviceid,
 		ContentAvailable: true,
 		Priority:         fcm.PriorityHigh,
 		Notification: fcm.Notification{

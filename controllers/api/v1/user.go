@@ -359,13 +359,14 @@ func DeleteUserSubscribers(c *gin.Context) {
 		return
 	}
 
-	//check permission
-	if userid, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); (userid != sub.FromID && userid != sub.ToID) || errGet != nil {
-		libs.ResponseAuthJSON(c, 200, "Permissions error")
-	}
 	if exist2, _ := services.CheckExistNodeWithID(sub.ToID); exist2 != true {
 		libs.ResponseJSON(c, 400, 110, "Invalid user id", nil)
 		return
+	}
+
+	//check permission
+	if userid, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); (userid != sub.FromID && userid != sub.ToID) || errGet != nil {
+		libs.ResponseAuthJSON(c, 200, "Permissions error")
 	}
 
 	if exist, err := services.CheckExistUserSubscriber(sub.FromID, sub.ToID); exist == false || err != nil {

@@ -5,7 +5,7 @@ import "github.com/gin-gonic/gin"
 //ResponseJSON func
 func ResponseJSON(c *gin.Context, status int, code int, message string, data interface{}) {
 
-	if status < 200 || status >= 300 {
+	if status >= 400 {
 		c.JSON(status, gin.H{
 			"code":    code,
 			"message": message,
@@ -96,5 +96,14 @@ func ResponseErrorsJSON(c *gin.Context, errors Errors) {
 //ResponseErrorJSON func
 func ResponseErrorJSON(c *gin.Context, error ErrorDetail) {
 	c.JSON(400, error)
+	c.Abort()
+}
+
+//ResponseForbiddenJSON func
+func ResponseForbiddenJSON(c *gin.Context, code int, message interface{}) {
+	c.JSON(403, gin.H{
+		"code":    code,
+		"message": message,
+	})
 	c.Abort()
 }

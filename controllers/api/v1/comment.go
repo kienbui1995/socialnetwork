@@ -18,6 +18,11 @@ func GetStatusComments(c *gin.Context) {
 	} else {
 
 		//check permisson
+		userid, _ := GetUserIDFromToken(c.Request.Header.Get("token"))
+		if allowed, _ := services.CheckStatusInteractivePermission(statusid, userid); allowed == false {
+			libs.ResponseForbiddenJSON(c, 220, "Status not visible")
+			return
+		}
 
 		sort := c.DefaultQuery("sort", "-created_at")
 		print(sort)
@@ -62,7 +67,10 @@ func CreateStatusComment(c *gin.Context) {
 
 		//check permisson
 		userid, _ := GetUserIDFromToken(c.Request.Header.Get("token"))
-
+		if allowed, _ := services.CheckStatusInteractivePermission(statusid, userid); allowed == false {
+			libs.ResponseForbiddenJSON(c, 220, "Status not visible")
+			return
+		}
 		// binding
 		json := struct {
 			Message string `json:"message" valid:"nonzero"`
@@ -84,7 +92,7 @@ func CreateStatusComment(c *gin.Context) {
 
 			// auto Increase Comments
 			go func() {
-				ok, err := services.IncreaseStatusComments(statusid)
+				ok, err := services.IncreaseObjectComments(statusid)
 				if err != nil {
 					fmt.Printf("ERROR in IncreaseStatusComments service: %s", err.Error())
 				}
@@ -106,16 +114,16 @@ func CreateStatusComment(c *gin.Context) {
 	}
 }
 
-// UpdateStatusComment func
-func UpdateStatusComment(c *gin.Context) {
+// UpdateComment func
+func UpdateComment(c *gin.Context) {
 	commentid, errcid := strconv.Atoi(c.Param("commentid"))
 	if errcid != nil {
 		libs.ResponseBadRequestJSON(c, 100, "Invalid comment id")
 	} else {
 
 		//check exist
-		if exist, _ := services.CheckExistUserStatus(commentid); exist != true {
-			libs.ResponseBadRequestJSON(c, 2, "No exist this object")
+		if exist, _ := services.CheckExistComment(commentid); exist != true {
+			libs.ResponseNotFoundJSON(c, 2, "No exist this object")
 			return
 		}
 
@@ -140,7 +148,7 @@ func UpdateStatusComment(c *gin.Context) {
 			return
 		}
 
-		updated, errUpdate := services.UpdateStatusComment(commentid, json.Message)
+		updated, errUpdate := services.UpdateComment(commentid, json.Message)
 		if errUpdate == nil && updated == true {
 			libs.ResponseSuccessJSON(c, 1, "Update comment successful", nil)
 			return
@@ -148,15 +156,15 @@ func UpdateStatusComment(c *gin.Context) {
 
 		libs.ResponseServerErrorJSON(c)
 		if errUpdate != nil {
-			fmt.Printf("ERROR in UpdateStatusComment services: %s", errUpdate.Error())
+			fmt.Printf("ERROR in UpdateComment services: %s", errUpdate.Error())
 		} else {
-			fmt.Printf("ERROR in UpdateStatusComment services: Don't UpdateStatusComment")
+			fmt.Printf("ERROR in UpdateComment services: Don't UpdateComment")
 		}
 	}
 }
 
-// DeleteStatusComment func to delete a comment
-func DeleteStatusComment(c *gin.Context) {
+// DeleteComment func to delete a comment
+func DeleteComment(c *gin.Context) {
 	commentid, errcid := strconv.Atoi(c.Param("commentid"))
 	if errcid != nil {
 		libs.ResponseBadRequestJSON(c, 100, "Invalid comment id")
@@ -164,25 +172,25 @@ func DeleteStatusComment(c *gin.Context) {
 
 		//check exist
 		if exist, _ := services.CheckExistComment(commentid); exist != true {
-			libs.ResponseBadRequestJSON(c, 2, "No exist this object")
+			libs.ResponseNotFoundJSON(c, 2, "No exist this object")
 			return
 		}
 
 		userid, _ := services.GetUserIDWroteComment(commentid)
-		statusid, _ := services.GetStatusIDbyCommentID(commentid)
+		objectid, _ := services.GetObjectIDbyCommentID(commentid)
 		//check permisson
 		if id, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != id || errGet != nil {
 			libs.ResponseAuthJSON(c, 200, "Permissions error")
 			return
 		}
 
-		ok, errDel := services.DeleteStatusComment(commentid)
+		ok, errDel := services.DeleteComment(commentid)
 		if errDel == nil && ok == true {
 			libs.ResponseSuccessJSON(c, 1, "Delete comment successful", nil)
 
 			// auto Decrease Status Comments
 			go func() {
-				ok, err := services.DecreaseStatusComments(statusid)
+				ok, err := services.DecreaseObjectComments(objectid)
 				if err != nil {
 					fmt.Printf("ERROR in IncreaseStatusComments service: %s", err.Error())
 				}
@@ -199,6 +207,111 @@ func DeleteStatusComment(c *gin.Context) {
 			fmt.Printf("ERROR in DeleteStatusComment services: %s", errDel.Error())
 		} else {
 			fmt.Printf("ERROR in DeleteStatusComment services: Don't DeleteStatusComment")
+		}
+
+	}
+}
+
+// GetPhotoComments func
+func GetPhotoComments(c *gin.Context) {
+	photoid, errpid := strconv.Atoi(c.Param("photoid"))
+	if errpid != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter: "+errpid.Error())
+	} else {
+
+		//check permisson
+		userid, _ := GetUserIDFromToken(c.Request.Header.Get("token"))
+		if allowed, _ := services.CheckPhotoInteractivePermission(photoid, userid); allowed == false {
+			libs.ResponseForbiddenJSON(c, 221, "Photo not visible")
+			return
+		}
+
+		sort := c.DefaultQuery("sort", "-created_at")
+		print(sort)
+		orderby, errSort := libs.ConvertSort(sort)
+		if errSort != nil {
+			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSort.Error())
+			return
+		}
+		skip, errSkip := strconv.Atoi(c.DefaultQuery("skip", "0"))
+		if errSkip != nil {
+			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSkip.Error())
+			return
+		}
+		limit, errLimit := strconv.Atoi(c.DefaultQuery("limit", "25"))
+		if errLimit != nil {
+			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errLimit.Error())
+			return
+		}
+
+		commentList, errList := services.GetPhotoComments(photoid, orderby, skip, limit)
+		if errList == nil {
+			libs.ResponseEntityListJSON(c, 1, "Photo Comments List", commentList, nil, len(commentList))
+			return
+		}
+
+		libs.ResponseServerErrorJSON(c)
+		if errList != nil {
+			fmt.Printf("ERROR in GetPhotoComments services: %s", errList.Error())
+		} else {
+			fmt.Printf("ERROR in GetPhotoComments services: Don't GetPhotoComments")
+		}
+
+	}
+}
+
+// CreatePhotoComment func
+func CreatePhotoComment(c *gin.Context) {
+	photoid, errpid := strconv.Atoi(c.Param("photoid"))
+	if errpid != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter: "+errpid.Error())
+	} else {
+
+		//check permisson
+		userid, _ := GetUserIDFromToken(c.Request.Header.Get("token"))
+		if allowed, _ := services.CheckPhotoInteractivePermission(photoid, userid); allowed == false {
+			libs.ResponseForbiddenJSON(c, 221, "Photo not visible")
+			return
+		}
+
+		// binding
+		json := struct {
+			Message string `json:"message" valid:"nonzero"`
+		}{}
+		if errBind := c.Bind(&json); errBind != nil {
+			libs.ResponseJSON(c, 400, 100, "Invalid parameter: "+errBind.Error(), nil)
+			return
+		}
+
+		// validation
+		if len(json.Message) == 0 {
+			libs.ResponseJSON(c, 400, 100, "Missing a few fields:  Message is NULL", nil)
+			return
+		}
+
+		commentid, errcid := services.CreatePhotoComment(photoid, userid, json.Message)
+		if errcid == nil && commentid >= 0 {
+			libs.ResponseCreatedJSON(c, 1, "Create status comment successful", map[string]interface{}{"id": commentid})
+
+			// auto Increase Comments
+			go func() {
+				ok, err := services.IncreaseObjectComments(photoid)
+				if err != nil {
+					fmt.Printf("ERROR in IncreaseStatusComments service: %s", err.Error())
+				}
+				if ok != true {
+					fmt.Printf("ERROR in IncreaseStatusComments service")
+				}
+			}()
+
+			return
+		}
+
+		libs.ResponseServerErrorJSON(c)
+		if errcid != nil {
+			fmt.Printf("ERROR in CreateStatusComment services: %s", errcid.Error())
+		} else {
+			fmt.Printf("ERROR in CreateStatusComment services: Don't CreateStatusComment")
 		}
 
 	}

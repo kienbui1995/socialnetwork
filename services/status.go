@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jmcvetta/neoism"
+	"github.com/kienbui1995/socialnetwork/configs"
 	"github.com/kienbui1995/socialnetwork/models"
 )
 
@@ -96,7 +97,8 @@ func UpdateUserStatus(statusid int, message string, privacy int, status int) (mo
     RETURN
 			ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at,
 			case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
-			ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar
+			ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
+			exists((u)-[:LIKE]->(s)) AS is_liked
   	`
 		params := map[string]interface{}{"statusid": statusid, "message": message, "privacy": privacy, "status": status}
 		res := []models.UserStatus{}
@@ -119,50 +121,43 @@ func UpdateUserStatus(statusid int, message string, privacy int, status int) (mo
 
 // DeleteUserStatus func
 func DeleteUserStatus(statusid int) (bool, error) {
-	if statusid >= 0 {
-		stmt := `
-  	MATCH (s:Status)<-[r:POST]-(u:User) WHERE ID(s) = {statusid} DELETE r, s
+	stmt := `
+  	MATCH (s:Status)<-[r:POST]-(u:User) WHERE ID(s) = {statusid}
+		DETACH DELETE s
   	`
-		params := map[string]interface{}{"statusid": statusid}
-		res := []models.UserStatus{}
-		cq := neoism.CypherQuery{
-			Statement:  stmt,
-			Parameters: params,
-			Result:     &res,
-		}
-		err := conn.Cypher(&cq)
-		if err != nil {
-			return false, err
-		}
-
+	params := map[string]interface{}{"statusid": statusid}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
 	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+
 	return true, nil
 }
 
 // GetUserIDPostedStatus func
 func GetUserIDPostedStatus(statusid int) (int, error) {
-	if statusid >= 0 {
-
-		stmt := `
+	stmt := `
     MATCH (u:User)-[r:POST]->(s:Status) WHERE ID(s) = {statusid} RETURN ID(u) AS id
   	`
-		params := map[string]interface{}{"statusid": statusid}
-		res := []struct {
-			ID int `json:"id"`
-		}{}
-		cq := neoism.CypherQuery{
-			Statement:  stmt,
-			Parameters: params,
-			Result:     &res,
-		}
-		err := conn.Cypher(&cq)
-		if err != nil {
-			return -1, err
-		}
-		if len(res) > 0 && res[0].ID >= 0 {
-			return res[0].ID, nil
-		}
-
+	params := map[string]interface{}{"statusid": statusid}
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return -1, err
+	}
+	if len(res) > 0 && res[0].ID >= 0 {
+		return res[0].ID, nil
 	}
 	return -1, nil
 }
@@ -377,60 +372,34 @@ func DecreaseStatusLikes(statusid int) (bool, error) {
 	return false, nil
 }
 
-// IncreaseStatusComments func
-func IncreaseStatusComments(statusid int) (bool, error) {
+// CheckStatusInteractivePermission func to check interactive permisson for user with a status
+func CheckStatusInteractivePermission(statusid int, userid int) (bool, error) {
 	stmt := `
-	MATCH (s:Status)
-	WHERE ID(s)= {statusid}
-	SET s.comments = s.comments+1
-	RETURN ID(s) AS id
-	`
-	params := neoism.Props{"statusid": statusid}
+		MATCH (who:User) WHERE ID(who) = {userid}
+		MATCH (u:User)-[r:POST]->(s:Status)
+		WHERE ID(s) = {statusid}
+		RETURN exist((who)-[:FOLLOW]->(u)) AS followed, s.privacy AS privacy
+		`
+	params := map[string]interface{}{"userid": userid, "statusid": statusid}
 	res := []struct {
-		ID int `json:"id"`
+		Followed bool `json:"followed"`
+		Privacy  int  `json:"privacy"`
+		Owner    bool `json:"owner"`
 	}{}
-
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
 		Parameters: params,
 		Result:     &res,
 	}
-
 	err := conn.Cypher(&cq)
 	if err != nil {
 		return false, err
 	}
-	if len(res) > 0 && res[0].ID == statusid {
-		return true, nil
+	if len(res) > 0 {
+		if res[0].Privacy == configs.Public || (res[0].Followed && res[0].Privacy == configs.ShareToFollowers || res[0].Owner) {
+			return true, nil
+		}
 	}
 	return false, nil
-}
 
-// DecreaseStatusComments func
-func DecreaseStatusComments(statusid int) (bool, error) {
-	stmt := `
-	MATCH (s:Status)
-	WHERE ID(s)= {statusid}
-	SET s.comments = s.comments-1
-	RETURN ID(s) AS id
-	`
-	params := neoism.Props{"statusid": statusid}
-	res := []struct {
-		ID int `json:"id"`
-	}{}
-
-	cq := neoism.CypherQuery{
-		Statement:  stmt,
-		Parameters: params,
-		Result:     &res,
-	}
-
-	err := conn.Cypher(&cq)
-	if err != nil {
-		return false, err
-	}
-	if len(res) > 0 && res[0].ID == statusid {
-		return true, nil
-	}
-	return false, nil
 }

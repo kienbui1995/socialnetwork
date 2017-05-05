@@ -12,9 +12,9 @@ type PrivacyType uint
 
 // Const privacy
 const (
-	Public PrivacyType = iota + 1
-	ShareToFollowers
-	Private
+	Public           = 1
+	ShareToFollowers = 2
+	Private          = 3
 )
 
 // ErrorCode Table
@@ -69,4 +69,15 @@ const (
 	APIEcAuthNoExistEmail                  = 413 //
 	APIEcAuthWrongRecoveryCode             = 414 //	Error in recover password: Wrong recovery code.
 	APIEcMesgNoBody                        = 501 //	Missing message body
+)
+
+// TypePost const
+const (
+	PostWall        = 1
+	PostUploadPhoto = 2
+	PostGroup       = 3
+	PostShareLink   = 4
+	PostSharePost   = 5
+	PostSharePage   = 6
+	PostShareGroup  = 7
 )

@@ -35,3 +35,11 @@ type SUserLike struct {
 	SUser
 	LikedAt int `json:"liked_at"`
 }
+
+// UserObject struct
+type UserObject struct {
+	UserID   int    `json:"userid"`
+	Username string `json:"username"`
+	FullName string `json:"full_name"`
+	Avatar   string `json:"avatar"`
+}

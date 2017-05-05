@@ -10,8 +10,8 @@ import (
 	"github.com/kienbui1995/socialnetwork/services"
 )
 
-// CreateUserStatus func  to create a user status
-func CreateUserStatus(c *gin.Context) {
+// CreateUserPhoto func
+func CreateUserPhoto(c *gin.Context) {
 	userid, erruid := strconv.Atoi(c.Param("userid"))
 	if erruid != nil {
 		libs.ResponseBadRequestJSON(c, 110, "Invalid user id")
@@ -24,23 +24,24 @@ func CreateUserStatus(c *gin.Context) {
 		}
 
 		json := struct {
-			Message string `json:"message" valid:"nonzero"`
+			Message string `json:"message"`
 			Privacy int    `json:"privacy"`
+			Photo   string `json:"photo"`
 		}{}
 		if errBind := c.Bind(&json); errBind != nil {
-			libs.ResponseJSON(c, 400, 100, "Invalid parameter: "+errBind.Error(), nil)
+			libs.ResponseBadRequestJSON(c, 100, "Invalid parameter: "+errBind.Error())
 			return
 		}
 
 		// validation
-		if len(json.Message) == 0 {
-			libs.ResponseJSON(c, 400, 100, "Missing a few fields:  Message is NULL", nil)
+		if len(json.Photo) == 0 {
+			libs.ResponseBadRequestJSON(c, 100, "Missing a few fields:  Photo is NULL")
 			return
 		}
 
-		statusID, errsid := services.CreateUserStatus(userid, json.Message, json.Privacy, 1)
-		if errsid == nil && statusID >= 0 {
-			libs.ResponseSuccessJSON(c, 1, "Create user status successful", map[string]interface{}{"id": statusID})
+		photoID, errpid := services.CreateUserPhoto(userid, json.Message, json.Photo, json.Privacy, 1)
+		if errpid == nil && photoID >= 0 {
+			libs.ResponseSuccessJSON(c, 1, "Create user status successful", map[string]interface{}{"id": photoID})
 
 			// auto Increase Posts
 			go func() {
@@ -55,16 +56,16 @@ func CreateUserStatus(c *gin.Context) {
 			return
 		}
 		libs.ResponseServerErrorJSON(c)
-		if erruid != nil {
-			fmt.Printf("ERROR in CreateUserStatus services: %s", erruid.Error())
+		if errpid != nil {
+			fmt.Printf("ERROR in CreateUserPhoto services: %s", errpid.Error())
 		} else {
-			fmt.Printf("ERROR in CreateUserStatus services: Don't create User Status")
+			fmt.Printf("ERROR in CreateUserPhoto services: Don't CreateUserPhoto")
 		}
 	}
 }
 
-// GetUserStatuses func to create a new post
-func GetUserStatuses(c *gin.Context) {
+// GetUserPhotos func to get  a  photo
+func GetUserPhotos(c *gin.Context) {
 	userid, erruid := strconv.Atoi(c.Param("userid"))
 	if erruid != nil {
 		libs.ResponseBadRequestJSON(c, 110, "Invalid user id")
@@ -78,7 +79,6 @@ func GetUserStatuses(c *gin.Context) {
 		}
 
 		sort := c.DefaultQuery("sort", "-created_at")
-		print(sort)
 		orderby, errSort := libs.ConvertSort(sort)
 		if errSort != nil {
 			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSort.Error())
@@ -95,9 +95,9 @@ func GetUserStatuses(c *gin.Context) {
 			return
 		}
 
-		statusList, errList := services.GetUserStatuses(userid, myuserid, orderby, skip, limit)
+		photoList, errList := services.GetUserPhotos(userid, myuserid, orderby, skip, limit)
 		if errList == nil {
-			libs.ResponseEntityListJSON(c, 1, "User Statuses List", statusList, nil, len(statusList))
+			libs.ResponseEntityListJSON(c, 1, "User Photos List", photoList, nil, len(photoList))
 			return
 		}
 
@@ -111,20 +111,20 @@ func GetUserStatuses(c *gin.Context) {
 	}
 }
 
-// UpdateUserStatus func to create a new post
-func UpdateUserStatus(c *gin.Context) {
-	statusid, errsid := strconv.Atoi(c.Param("statusid"))
-	if errsid != nil {
-		libs.ResponseBadRequestJSON(c, 100, "Invalid status id")
+// UpdateUserPhoto func to  update for a photo via photoid
+func UpdateUserPhoto(c *gin.Context) {
+	photoid, errpid := strconv.Atoi(c.Param("photoid"))
+	if errpid != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid photo id")
 	} else {
 
 		//check exist
-		if exist, _ := services.CheckExistUserStatus(statusid); exist != true {
-			libs.ResponseBadRequestJSON(c, 2, "No exist this object")
+		if exist, _ := services.CheckExistUserPhoto(photoid); exist != true {
+			libs.ResponseNotFoundJSON(c, 2, "No exist this object")
 			return
 		}
 
-		userid, _ := services.GetUserIDPostedStatus(statusid)
+		userid, _ := services.GetUserIDUploadedPhoto(photoid)
 		//check permisson
 		if id, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != id || errGet != nil {
 			libs.ResponseAuthJSON(c, 200, "Permissions error")
@@ -147,8 +147,8 @@ func UpdateUserStatus(c *gin.Context) {
 			return
 		}
 
-		status, errUpdate := services.UpdateUserStatus(statusid, json.Message, json.Privacy, json.Status)
-		if errUpdate == nil && status.CreatedAt > 0 {
+		status, errUpdate := services.UpdateUserPhoto(photoid, json.Message, json.Privacy, json.Status)
+		if errUpdate == nil && status.UpdatedAt > 0 {
 			libs.ResponseSuccessJSON(c, 1, "Update user status successful", status)
 			return
 		}
@@ -163,29 +163,29 @@ func UpdateUserStatus(c *gin.Context) {
 	}
 }
 
-// DeleteUserStatus func to delete a user status
-func DeleteUserStatus(c *gin.Context) {
-	statusid, errsid := strconv.Atoi(c.Param("statusid"))
-	if errsid != nil {
-		libs.ResponseBadRequestJSON(c, 100, "Invalid status id")
+// DeleteUserPhoto func to delete a user photo via photoid
+func DeleteUserPhoto(c *gin.Context) {
+	photoid, errpid := strconv.Atoi(c.Param("photoid"))
+	if errpid != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid photo id")
 	} else {
 
 		//check exist
-		if exist, _ := services.CheckExistUserStatus(statusid); exist != true {
-			libs.ResponseBadRequestJSON(c, 2, "No exist this object")
+		if exist, _ := services.CheckExistUserPhoto(photoid); exist != true {
+			libs.ResponseNotFoundJSON(c, 2, "No exist this object")
 			return
 		}
 
-		userid, _ := services.GetUserIDPostedStatus(statusid)
+		userid, _ := services.GetUserIDUploadedPhoto(photoid)
 		//check permisson
 		if id, errGet := GetUserIDFromToken(c.Request.Header.Get("token")); userid != id || errGet != nil {
 			libs.ResponseAuthJSON(c, 200, "Permissions error")
 			return
 		}
 
-		ok, errDel := services.DeleteUserStatus(statusid)
+		ok, errDel := services.DeleteUserPhoto(photoid)
 		if errDel == nil && ok == true {
-			libs.ResponseSuccessJSON(c, 1, "Delete user status successful", nil)
+			libs.ResponseSuccessJSON(c, 1, "Delete user photo successful", nil)
 
 			// auto Decrease Posts
 			go func() {
@@ -202,38 +202,42 @@ func DeleteUserStatus(c *gin.Context) {
 
 		libs.ResponseServerErrorJSON(c)
 		if errDel != nil {
-			fmt.Printf("ERROR in DeleteUserStatus services: %s", errDel.Error())
+			fmt.Printf("ERROR in DeleteUserPhoto services: %s", errDel.Error())
 		} else {
-			fmt.Printf("ERROR in DeleteUserStatus services: Don't delete User Statuses")
+			fmt.Printf("ERROR in DeleteUserPhoto services: Don't delete user photo")
 		}
 
 	}
 }
 
-// GetUserStatus func to delete a user status
-func GetUserStatus(c *gin.Context) {
-	statusid, errsid := strconv.Atoi(c.Param("statusid"))
-	if errsid != nil {
-		libs.ResponseBadRequestJSON(c, 100, "Invalid status id")
+// GetUserPhoto func to get a user photo via photoid
+func GetUserPhoto(c *gin.Context) {
+	photoid, errpid := strconv.Atoi(c.Param("photoid"))
+	if errpid != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid photo id")
 	} else {
 
 		//check exist
-		if exist, _ := services.CheckExistUserStatus(statusid); exist != true {
-			libs.ResponseBadRequestJSON(c, 2, "No exist this object")
+		if exist, _ := services.CheckExistUserPhoto(photoid); exist != true {
+			libs.ResponseNotFoundJSON(c, 2, "No exist this object")
 			return
 		}
 
 		// userid, _ := services.GetUserIDPostedStatus(statusid)
-		//check permisson ~needfix when privacy not public
+		//check permisson
 		myuserid, errGet := GetUserIDFromToken(c.Request.Header.Get("token"))
 		if myuserid == -1 || errGet != nil {
 			libs.ResponseAuthJSON(c, 200, "Permissions error")
 			return
 		}
+		if allowed, _ := services.CheckPhotoInteractivePermission(photoid, myuserid); allowed == false {
+			libs.ResponseForbiddenJSON(c, 221, "Photo not visible")
+			return
+		}
 
-		status, errGet := services.GetUserStatus(statusid, myuserid)
-		if errGet == nil && status.ID == statusid {
-			libs.ResponseSuccessJSON(c, 1, "Get user status successful", status)
+		photo, errGet := services.GetUserPhoto(photoid, myuserid)
+		if errGet == nil && photo.PhotoID == photoid {
+			libs.ResponseSuccessJSON(c, 1, "Get user photo successful", photo)
 			return
 		}
 
@@ -247,34 +251,38 @@ func GetUserStatus(c *gin.Context) {
 	}
 }
 
-// CreateStatusLike func
-func CreateStatusLike(c *gin.Context) {
-	statusid, errsid := strconv.Atoi(c.Param("statusid"))
-	if errsid != nil {
-		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter: "+errsid.Error())
+// CreatePhotoLike func
+func CreatePhotoLike(c *gin.Context) {
+	photoid, errpid := strconv.Atoi(c.Param("photoid"))
+	if errpid != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter: "+errpid.Error())
 	} else {
 
 		//check permisson
 		userid, _ := GetUserIDFromToken(c.Request.Header.Get("token"))
+		if allowed, _ := services.CheckPhotoInteractivePermission(photoid, userid); allowed == false {
+			libs.ResponseForbiddenJSON(c, 221, "Photo not visible")
+			return
+		}
 
 		// check liked
-		if liked, _ := services.CheckExistStatusLike(statusid, userid); liked == true {
+		if liked, _ := services.CheckExistPhotoLike(photoid, userid); liked == true {
 			libs.ResponseBadRequestJSON(c, 3, "Exist this object: Likes")
 			return
 		}
 
-		liked, errLike := services.CreateStatusLike(statusid, userid)
+		liked, errLike := services.CreatePhotoLike(photoid, userid)
 		if errLike == nil && liked == true {
-			libs.ResponseSuccessJSON(c, 1, "Like status successful", nil)
+			libs.ResponseSuccessJSON(c, 1, "Like photo successful", nil)
 
 			// auto Increase Status Likes
 			go func() {
-				ok, err := services.IncreaseStatusLikes(statusid)
+				ok, err := services.IncreasePhotoLikes(photoid)
 				if err != nil {
-					fmt.Printf("ERROR in IncreaseStatusLikes service: %s", err.Error())
+					fmt.Printf("ERROR in IncreasePhotoLikes service: %s", err.Error())
 				}
 				if ok != true {
-					fmt.Printf("ERROR in IncreaseStatusLikes service")
+					fmt.Printf("ERROR in IncreasePhotoLikes service")
 				}
 			}()
 			return
@@ -282,24 +290,24 @@ func CreateStatusLike(c *gin.Context) {
 
 		libs.ResponseServerErrorJSON(c)
 		if errLike != nil {
-			fmt.Printf("ERROR in CreateStatusLike services: %s", errLike.Error())
+			fmt.Printf("ERROR in CreatePhotoLike services: %s", errLike.Error())
 		} else {
-			fmt.Printf("ERROR in CreateStatusLike services: Don't CreateStatusLike")
+			fmt.Printf("ERROR in CreatePhotoLike services: Don't CreatePhotoLike")
 		}
 
 	}
 }
 
-// DeleteStatusLike func to delete a like
-func DeleteStatusLike(c *gin.Context) {
-	statusid, errsid := strconv.Atoi(c.Param("statusid"))
-	if errsid != nil {
-		libs.ResponseBadRequestJSON(c, 100, "Invalid comment id")
+// DeletePhotoLike func to delete a like
+func DeletePhotoLike(c *gin.Context) {
+	photoid, errpid := strconv.Atoi(c.Param("photoid"))
+	if errpid != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid photo id")
 	} else {
 
 		//check exist
-		if exist, _ := services.CheckExistUserStatus(statusid); exist != true {
-			libs.ResponseBadRequestJSON(c, 2, "No exist this object")
+		if exist, _ := services.CheckExistUserPhoto(photoid); exist != true {
+			libs.ResponseNotFoundJSON(c, 2, "No exist this object")
 			return
 		}
 
@@ -309,25 +317,29 @@ func DeleteStatusLike(c *gin.Context) {
 			libs.ResponseAuthJSON(c, 200, "Permissions error")
 			return
 		}
-
-		// check liked
-		if liked, _ := services.CheckExistStatusLike(statusid, userid); liked != true {
-			libs.ResponseBadRequestJSON(c, 3, "Exist this object: Likes")
+		if allowed, _ := services.CheckPhotoInteractivePermission(photoid, userid); allowed == false {
+			libs.ResponseForbiddenJSON(c, 221, "Photo not visible")
 			return
 		}
 
-		ok, errDel := services.DeleteStatusLike(statusid, userid)
+		// check liked
+		if liked, _ := services.CheckExistPhotoLike(photoid, userid); liked != true {
+			libs.ResponseNotFoundJSON(c, 2, "Don't Exist this object: Likes")
+			return
+		}
+
+		ok, errDel := services.DeletePhotoLike(photoid, userid)
 		if errDel == nil && ok == true {
-			libs.ResponseSuccessJSON(c, 1, "Unlike successful", nil)
+			libs.ResponseJSON(c, 200, 1, "Unlike successful", nil)
 
 			// auto Decrease Status Likes
 			go func() {
-				ok, err := services.DecreaseStatusLikes(statusid)
+				ok, err := services.DecreasePhotoLikes(photoid)
 				if err != nil {
-					fmt.Printf("ERROR in DecreaseStatusLikes service: %s", err.Error())
+					fmt.Printf("ERROR in DecreasePhotoLikes service: %s", err.Error())
 				}
 				if ok != true {
-					fmt.Printf("ERROR in DecreaseStatusLikes service")
+					fmt.Printf("ERROR in DecreasePhotoLikes service")
 				}
 			}()
 
@@ -336,24 +348,27 @@ func DeleteStatusLike(c *gin.Context) {
 
 		libs.ResponseServerErrorJSON(c)
 		if errDel != nil {
-			fmt.Printf("ERROR in DeleteStatusLike services: %s", errDel.Error())
+			fmt.Printf("ERROR in DeletePhotoLike services: %s", errDel.Error())
 		} else {
-			fmt.Printf("ERROR in DeleteStatusLike services: Don't DeleteStatusLike")
+			fmt.Printf("ERROR in DeletePhotoLike services: Don't DeletePhotoLike")
 		}
 
 	}
 }
 
-// GetStatusLikes func
-func GetStatusLikes(c *gin.Context) {
-	statusid, errsid := strconv.Atoi(c.Param("statusid"))
-	if errsid != nil {
-		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter: "+errsid.Error())
+// GetPhotoLikes func
+func GetPhotoLikes(c *gin.Context) {
+	photoid, errpid := strconv.Atoi(c.Param("photoid"))
+	if errpid != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter: "+errpid.Error())
 	} else {
 
 		//check permisson
 		userid, _ := GetUserIDFromToken(c.Request.Header.Get("token"))
-
+		if allowed, _ := services.CheckPhotoInteractivePermission(photoid, userid); allowed == false {
+			libs.ResponseForbiddenJSON(c, 221, "Photo not visible")
+			return
+		}
 		sort := c.DefaultQuery("sort", "-liked_at")
 
 		orderby, errSort := libs.ConvertSort(sort)
@@ -372,17 +387,17 @@ func GetStatusLikes(c *gin.Context) {
 			return
 		}
 
-		likeList, errList := services.GetStatusLikes(statusid, userid, orderby, skip, limit)
+		likeList, errList := services.GetPhotoLikes(photoid, userid, orderby, skip, limit)
 		if errList == nil {
-			libs.ResponseEntityListJSON(c, 1, " Statuses Likes User List", likeList, nil, len(likeList))
+			libs.ResponseEntityListJSON(c, 1, " Photo Likes User List", likeList, nil, len(likeList))
 			return
 		}
 
 		libs.ResponseServerErrorJSON(c)
 		if errList != nil {
-			fmt.Printf("ERROR in GetStatusLikes services: %s", errList.Error())
+			fmt.Printf("ERROR in GetPhotoLikes services: %s", errList.Error())
 		} else {
-			fmt.Printf("ERROR in GetStatusLikes services: Don't GetStatusLikes")
+			fmt.Printf("ERROR in GetPhotoLikes services: Don't GetPhotoLikes")
 		}
 
 	}

@@ -78,7 +78,7 @@ func CheckExistToken(userid int, token string) (bool, error) {
 		return false, err
 	}
 	if len(res) == 0 {
-		return false, errors.New("Error, can't check token on DB")
+		return false, errors.New("NULL")
 	}
 	if res[0].ExistToken != true {
 		return false, errors.New("Wrong token")
