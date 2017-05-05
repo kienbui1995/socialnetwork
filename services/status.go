@@ -378,7 +378,7 @@ func CheckStatusInteractivePermission(statusid int, userid int) (bool, error) {
 		MATCH (who:User) WHERE ID(who) = {userid}
 		MATCH (u:User)-[r:POST]->(s:Status)
 		WHERE ID(s) = {statusid}
-		RETURN exist((who)-[:FOLLOW]->(u)) AS followed, s.privacy AS privacy
+		RETURN exists((who)-[:FOLLOW]->(u)) AS followed, s.privacy AS privacy
 		`
 	params := map[string]interface{}{"userid": userid, "statusid": statusid}
 	res := []struct {
