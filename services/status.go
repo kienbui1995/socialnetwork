@@ -51,6 +51,7 @@ func GetUserStatuses(userid int, myuserid int, orderby string, skip int, limit i
 	    MATCH(u:User) WHERE ID(u) = {userid}
 			MATCH(me:User) WHERE ID(me) = {myuserid}
 	  	MATCH (s:Status)<-[r:POST]-(u)
+			WHERE s.privacy = 1 OR (s.privacy = 2 AND exists(me-[:FOLLOW]->(u))) OR {userid} = {myuserid}
 			RETURN
 				ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at,
 				case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
@@ -288,6 +289,34 @@ func DeleteStatusLike(statusid int, userid int) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+// CheckExistStatusLike func
+func CheckExistStatusLike(statusid int, userid int) (bool, error) {
+	stmt := `
+  	MATCH (u:User)-[l:LIKE]->(s:Status)
+		WHERE ID(u) = {userid} AND ID(s) = {statusid}
+		RETURN ID(l) as id
+  	`
+	params := neoism.Props{"statusid": statusid, "userid": userid}
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+	if len(res) > 0 && res[0].ID >= 0 {
+		return true, nil
+	}
+	return false, nil
 }
 
 // IncreaseStatusLikes func
