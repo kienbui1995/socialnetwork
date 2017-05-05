@@ -72,5 +72,5 @@ func PushTest(userid int, objectid int, tittle string, message string) {
 		fmt.Println("Canonical_ids :", response.CanonicalIDs)
 		fmt.Println("Topic MsgId   :", response.MsgID)
 	}
-
+	fmt.Printf("Push noti successful: %v", data)
 }
