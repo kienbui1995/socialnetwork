@@ -38,6 +38,12 @@ func CreateUserStatus(c *gin.Context) {
 			libs.ResponseJSON(c, 400, 100, "Missing a few fields:  Message is NULL", nil)
 			return
 		}
+		if json.Status == 0 {
+			json.Status = 1
+		}
+		if json.Privacy == 0 {
+			json.Privacy = 1
+		}
 
 		statusID, errsid := services.CreateUserStatus(userid, json.Message, json.Privacy, json.Status)
 		if errsid == nil && statusID >= 0 {
