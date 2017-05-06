@@ -10,7 +10,7 @@ import (
 )
 
 // CreateUserStatus func
-func CreateUserStatus(userid int, message string, privacy string, status string) (int, error) {
+func CreateUserStatus(userid int, message string, privacy int, status int) (int, error) {
 	if userid >= 0 && len(message) > 0 {
 		p := neoism.Props{
 			"message":  message,
