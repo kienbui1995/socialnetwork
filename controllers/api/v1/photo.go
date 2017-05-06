@@ -27,6 +27,7 @@ func CreateUserPhoto(c *gin.Context) {
 			Message string `json:"message"`
 			Privacy int    `json:"privacy"`
 			Photo   string `json:"photo"`
+			Status  int    `json:"status"`
 		}{}
 		if errBind := c.Bind(&json); errBind != nil {
 			libs.ResponseBadRequestJSON(c, 100, "Invalid parameter: "+errBind.Error())
@@ -38,8 +39,15 @@ func CreateUserPhoto(c *gin.Context) {
 			libs.ResponseBadRequestJSON(c, 100, "Missing a few fields:  Photo is NULL")
 			return
 		}
+		if json.Privacy == 0 {
+			json.Privacy = 1
+		}
 
-		photoID, errpid := services.CreateUserPhoto(userid, json.Message, json.Photo, json.Privacy, 1)
+		if json.Status == 0 {
+			json.Status = 1
+		}
+
+		photoID, errpid := services.CreateUserPhoto(userid, json.Message, json.Photo, json.Privacy, json.Status)
 		if errpid == nil && photoID >= 0 {
 			libs.ResponseSuccessJSON(c, 1, "Create user status successful", map[string]interface{}{"id": photoID})
 

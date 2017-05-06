@@ -62,10 +62,11 @@ func CreateUserStatus(c *gin.Context) {
 
 			// push noti
 			go func() {
+				user, _ := services.GetUser(userid)
 				ids, errGetIDs := services.GetFollowers(userid)
 				if len(ids) > 0 && errGetIDs == nil {
 					for index := 0; index < len(ids); index++ {
-						PushTest(ids[index].UserID, 1, "@"+ids[index].Username+" vừa cập nhật một trạng thái", json.Message)
+						PushTest(ids[index].UserID, 1, "@"+user.Username+" vừa cập nhật một trạng thái", json.Message)
 					}
 
 				}
