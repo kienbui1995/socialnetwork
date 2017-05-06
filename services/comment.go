@@ -7,44 +7,146 @@ import (
 	"github.com/kienbui1995/socialnetwork/models"
 )
 
-// CreateStatusComment func
-func CreateStatusComment(statusid int, userid int, message string) (int, error) {
-	p := neoism.Props{
-		"message": message,
-		"status":  1,
-	}
-	stmt := `
-	MATCH (u:User) WHERE ID(u) = {userid}
-	MATCH (s:Status) WHERE ID(s) = {statusid}
-	CREATE (c:Comment { props } ) SET c.created_at = TIMESTAMP()
-	CREATE (u)-[w:WRITE]->(c)-[a:AT]->(s)
-	RETURN ID(c) AS id
-	`
-	params := map[string]interface{}{"props": p, "statusid": statusid, "userid": userid}
-	res := []struct {
-		ID int `json:"id"`
-	}{}
-	cq := neoism.CypherQuery{
-		Statement:  stmt,
-		Parameters: params,
-		Result:     &res,
-	}
-	err := conn.Cypher(&cq)
-	if err != nil {
-		return -1, err
-	}
-	if len(res) > 0 && res[0].ID >= 0 {
-		return res[0].ID, nil
-	}
-	return -1, nil
-}
+// // CreateStatusComment func
+// func CreateStatusComment(statusid int, userid int, message string) (int, error) {
+// 	p := neoism.Props{
+// 		"message": message,
+// 		"status":  1,
+// 	}
+// 	stmt := `
+// 	MATCH (u:User) WHERE ID(u) = {userid}
+// 	MATCH (s:Status) WHERE ID(s) = {statusid}
+// 	CREATE (c:Comment { props } ) SET c.created_at = TIMESTAMP()
+// 	CREATE (u)-[w:WRITE]->(c)-[a:AT]->(s)
+// 	RETURN ID(c) AS id
+// 	`
+// 	params := map[string]interface{}{"props": p, "statusid": statusid, "userid": userid}
+// 	res := []struct {
+// 		ID int `json:"id"`
+// 	}{}
+// 	cq := neoism.CypherQuery{
+// 		Statement:  stmt,
+// 		Parameters: params,
+// 		Result:     &res,
+// 	}
+// 	err := conn.Cypher(&cq)
+// 	if err != nil {
+// 		return -1, err
+// 	}
+// 	if len(res) > 0 && res[0].ID >= 0 {
+// 		return res[0].ID, nil
+// 	}
+// 	return -1, nil
+// }
+//
+// // GetStatusComments func
+// func GetStatusComments(statusid int, orderby string, skip int, limit int) ([]models.UserComment, error) {
+//
+// 	stmt := fmt.Sprintf(`
+// 	MATCH (u:User)-[w:WRITE]->(c:Comment)-[a:AT]->(s:Status)
+// 	WHERE ID(s) = {statusid}
+// 	RETURN
+// 		ID(c) AS id, c.message AS message, c.created_at AS created_at, c.updated_at AS updated_at ,c.status AS status,
+// 		ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar
+// 	ORDER BY %s
+// 	SKIP {skip}
+// 	LIMIT {limit}
+// 	`, orderby)
+// 	params := map[string]interface{}{
+// 		"statusid": statusid,
+// 		"skip":     skip,
+// 		"limit":    limit,
+// 	}
+//
+// 	res := []models.UserComment{}
+// 	cq := neoism.CypherQuery{
+// 		Statement:  stmt,
+// 		Parameters: params,
+// 		Result:     &res,
+// 	}
+// 	err := conn.Cypher(&cq)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if len(res) > 0 && res[0].ID >= 0 {
+// 		return res, nil
+// 	}
+// 	return nil, nil
+// }
 
-// GetStatusComments func
-func GetStatusComments(statusid int, orderby string, skip int, limit int) ([]models.UserComment, error) {
+// // CreatePhotoComment func
+// func CreatePhotoComment(photoid int, userid int, message string) (int, error) {
+// 	p := neoism.Props{
+// 		"message": message,
+// 		"status":  1,
+// 	}
+// 	stmt := `
+// 	MATCH (u:User) WHERE ID(u) = {userid}
+// 	MATCH (p:Photo) WHERE ID(s) = {photoid}
+// 	CREATE (c:Comment { props } ) SET c.created_at = TIMESTAMP()
+// 	CREATE (u)-[w:WRITE]->(c)-[a:AT]->(p)
+// 	RETURN ID(c) AS id
+// 	`
+// 	params := map[string]interface{}{"props": p, "photoid": photoid, "userid": userid}
+// 	res := []struct {
+// 		ID int `json:"id"`
+// 	}{}
+// 	cq := neoism.CypherQuery{
+// 		Statement:  stmt,
+// 		Parameters: params,
+// 		Result:     &res,
+// 	}
+// 	err := conn.Cypher(&cq)
+// 	if err != nil {
+// 		return -1, err
+// 	}
+// 	if len(res) > 0 && res[0].ID >= 0 {
+// 		return res[0].ID, nil
+// 	}
+// 	return -1, nil
+// }
+//
+// // GetPhotoComments func
+// func GetPhotoComments(photoid int, orderby string, skip int, limit int) ([]models.UserComment, error) {
+//
+// 	stmt := fmt.Sprintf(`
+// 	MATCH (u:User)-[w:WRITE]->(c:Comment)-[a:AT]->(p:Photo)
+// 	WHERE ID(p) = {photoid}
+// 	RETURN
+// 		ID(c) AS id, c.message AS message, c.created_at AS created_at, c.updated_at AS updated_at ,c.status AS status,
+// 		ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar
+// 	ORDER BY %s
+// 	SKIP {skip}
+// 	LIMIT {limit}
+// 	`, orderby)
+// 	params := map[string]interface{}{
+// 		"photoid": photoid,
+// 		"skip":    skip,
+// 		"limit":   limit,
+// 	}
+//
+// 	res := []models.UserComment{}
+// 	cq := neoism.CypherQuery{
+// 		Statement:  stmt,
+// 		Parameters: params,
+// 		Result:     &res,
+// 	}
+// 	err := conn.Cypher(&cq)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	if len(res) > 0 && res[0].ID >= 0 {
+// 		return res, nil
+// 	}
+// 	return nil, nil
+// }
+
+// GetComments func
+func GetComments(postid int, orderby string, skip int, limit int) ([]models.UserComment, error) {
 
 	stmt := fmt.Sprintf(`
-	MATCH (u:User)-[w:WRITE]->(c:Comment)-[a:AT]->(s:Status)
-	WHERE ID(s) = {statusid}
+	MATCH (u:User)-[w:WRITE]->(c:Comment)-[a:AT]->(s:Post)
+	WHERE ID(s) = {postid}
 	RETURN
 		ID(c) AS id, c.message AS message, c.created_at AS created_at, c.updated_at AS updated_at ,c.status AS status,
 		ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar
@@ -53,9 +155,9 @@ func GetStatusComments(statusid int, orderby string, skip int, limit int) ([]mod
 	LIMIT {limit}
 	`, orderby)
 	params := map[string]interface{}{
-		"statusid": statusid,
-		"skip":     skip,
-		"limit":    limit,
+		"postid": postid,
+		"skip":   skip,
+		"limit":  limit,
 	}
 
 	res := []models.UserComment{}
@@ -72,6 +174,69 @@ func GetStatusComments(statusid int, orderby string, skip int, limit int) ([]mod
 		return res, nil
 	}
 	return nil, nil
+}
+
+// GetComment func
+func GetComment(commentid int) (models.UserComment, error) {
+
+	stmt := `
+	MATCH (c:Comment)<-[:WRITE]-(u:User)
+	WHERE ID(c) = {commentid}
+	RETURN
+		ID(c) AS id, c.message AS message, c.created_at AS created_at, c.updated_at AS updated_at ,c.status AS status,
+		ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar
+	`
+	params := map[string]interface{}{
+		"commentid": commentid,
+	}
+
+	res := []models.UserComment{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return models.UserComment{}, err
+	}
+	if len(res) > 0 && res[0].ID >= 0 {
+		return res[0], nil
+	}
+	return models.UserComment{}, nil
+}
+
+// CreateComment func
+func CreateComment(userid int, message string, privacy int, status int, objectid int) (int, error) {
+	p := neoism.Props{
+		"message": message,
+		"privacy": privacy,
+		"status":  status,
+	}
+	stmt := `
+	MATCH (u:User) WHERE ID(u) = {userid}
+	MATCH (s) WHERE ID(s) = {objectid}
+	CREATE (c:Comment { props } ) SET c.created_at = TIMESTAMP()
+	CREATE (u)-[w:WRITE]->(c)-[a:AT]->(s)
+	RETURN ID(c) AS id
+	`
+	params := map[string]interface{}{"props": p, "userid": userid, "objectid": objectid}
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return -1, err
+	}
+	if len(res) > 0 && res[0].ID >= 0 {
+		return res[0].ID, nil
+	}
+	return -1, nil
 }
 
 // DeleteComment func
@@ -171,73 +336,6 @@ func GetObjectIDbyCommentID(commentid int) (int, error) {
 		return res[0].ID, nil
 	}
 	return -1, nil
-}
-
-// CreatePhotoComment func
-func CreatePhotoComment(photoid int, userid int, message string) (int, error) {
-	p := neoism.Props{
-		"message": message,
-		"status":  1,
-	}
-	stmt := `
-	MATCH (u:User) WHERE ID(u) = {userid}
-	MATCH (p:Photo) WHERE ID(s) = {photoid}
-	CREATE (c:Comment { props } ) SET c.created_at = TIMESTAMP()
-	CREATE (u)-[w:WRITE]->(c)-[a:AT]->(p)
-	RETURN ID(c) AS id
-	`
-	params := map[string]interface{}{"props": p, "photoid": photoid, "userid": userid}
-	res := []struct {
-		ID int `json:"id"`
-	}{}
-	cq := neoism.CypherQuery{
-		Statement:  stmt,
-		Parameters: params,
-		Result:     &res,
-	}
-	err := conn.Cypher(&cq)
-	if err != nil {
-		return -1, err
-	}
-	if len(res) > 0 && res[0].ID >= 0 {
-		return res[0].ID, nil
-	}
-	return -1, nil
-}
-
-// GetPhotoComments func
-func GetPhotoComments(photoid int, orderby string, skip int, limit int) ([]models.UserComment, error) {
-
-	stmt := fmt.Sprintf(`
-	MATCH (u:User)-[w:WRITE]->(c:Comment)-[a:AT]->(p:Photo)
-	WHERE ID(p) = {photoid}
-	RETURN
-		ID(c) AS id, c.message AS message, c.created_at AS created_at, c.updated_at AS updated_at ,c.status AS status,
-		ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar
-	ORDER BY %s
-	SKIP {skip}
-	LIMIT {limit}
-	`, orderby)
-	params := map[string]interface{}{
-		"photoid": photoid,
-		"skip":    skip,
-		"limit":   limit,
-	}
-
-	res := []models.UserComment{}
-	cq := neoism.CypherQuery{
-		Statement:  stmt,
-		Parameters: params,
-		Result:     &res,
-	}
-	err := conn.Cypher(&cq)
-	if err != nil {
-		return nil, err
-	}
-	if len(res) > 0 && res[0].ID >= 0 {
-		return res, nil
-	}
-	return nil, nil
 }
 
 // IncreaseObjectComments func

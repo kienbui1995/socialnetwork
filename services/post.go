@@ -1,20 +1,189 @@
 package services
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/jmcvetta/neoism"
+	"github.com/kienbui1995/socialnetwork/configs"
 	"github.com/kienbui1995/socialnetwork/models"
 )
 
-// CreateStatus func
-func CreateStatus(post models.Post) (int, error) {
-	p := neoism.Props{
-		"message": post.Message,
-		"photo":   post.Photo,
+// CreateUserPost func
+func CreateUserPost(userid int, message string, photo string, privacy int, status int) (int, error) {
+	var p interface{}
+	var stmt string
+	if len(photo) == 0 {
+		p = neoism.Props{
+			"message":  message,
+			"privacy":  privacy,
+			"status":   status,
+			"likes":    0,
+			"comments": 0,
+			"shares":   0,
+		}
+		stmt = `
+	    MATCH(u:User) WHERE ID(u) = {fromid}
+	  	CREATE (s:Status:Post { props } )<-[r:POST]-(u)
+			SET s.created_at = TIMESTAMP()
+			RETURN ID(s) as id
+	  	`
+	} else {
+		p = neoism.Props{
+			"message":  message,
+			"photo":    photo,
+			"privacy":  privacy,
+			"status":   status,
+			"likes":    0,
+			"comments": 0,
+			"shares":   0,
+		}
+		stmt = `
+	    MATCH(u:User) WHERE ID(u) = {fromid}
+	  	CREATE (s:Photo:Post { props } )<-[r:POST]-(u)
+			SET s.created_at = TIMESTAMP()
+			RETURN ID(s) as id
+	  	`
 	}
+	params := map[string]interface{}{"props": p, "fromid": userid}
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return -1, err
+	}
+	if len(res) > 0 && res[0].ID >= 0 {
+		return res[0].ID, nil
+	}
+
+	return -1, nil
+}
+
+//GetUserPosts func
+func GetUserPosts(userid int, myuserid int, orderby string, skip int, limit int) ([]models.Post, error) {
+
+	stmt := fmt.Sprintf(`
+	    MATCH(u:User) WHERE ID(u) = {userid}
+			MATCH(me:User) WHERE ID(me) = {myuserid}
+	  	MATCH (s:Post)<-[r:POST]-(u)
+			WHERE s.privacy = 1 OR (s.privacy = 2 AND exists((me)-[:FOLLOW]->(u))) OR {userid} = {myuserid}
+			RETURN
+				ID(s) AS id, s.message AS message,
+				case s.photo when null then "" else s.photo end AS photo,
+				s.created_at AS created_at, s.updated_at AS updated_at,
+				case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+				s.likes AS likes, s.comments AS comments, s.shares AS shares,
+				ID(u) AS userid, u.avatar AS avatar, u.full_name AS full_name, u.username AS username,
+				exists((me)-[:LIKE]->(s)) AS is_liked
+			ORDER BY %s
+			SKIP {skip}
+			LIMIT {limit}
+	  	`, orderby)
+	params := map[string]interface{}{
+		"userid":   userid,
+		"myuserid": myuserid,
+		"skip":     skip,
+		"limit":    limit,
+	}
+	res := []models.Post{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) > 0 && res[0].PostID >= 0 {
+
+		return res, nil
+
+	}
+	return nil, nil
+}
+
+// UpdateUserPost func
+func UpdateUserPost(postid int, message string, photo string, privacy int, status int) (models.Post, error) {
+	var stmt string
+	var params map[string]interface{}
+	if len(photo) > 0 {
+		stmt = `
+			MATCH (s:Post)<-[r:POST]-(u:User)
+			WHERE ID(s) = {postid}
+			SET s.message = {message}, s.photo = {photo}, s.privacy = {privacy}, s.updated_at = TIMESTAMP(), s.status = {status}, s:Photo
+			RETURN
+				ID(s) AS id, s.message AS message, s.photo AS photo, s.created_at AS created_at, s.updated_at AS updated_at,
+				case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+				ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
+				exists((u)-[:LIKE]->(s)) AS is_liked
+			`
+		params = map[string]interface{}{"postid": postid, "message": message, "photo": photo, "privacy": privacy, "status": status}
+	} else {
+		stmt = `
+  	MATCH (s:Post)<-[r:POST]-(u:User)
+    WHERE ID(s) = {postid}
+		SET s.message = {message}, s.privacy = {privacy}, s.updated_at = TIMESTAMP(), s.status = {status}
+    RETURN
+			ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at,
+			case s.photo when null then "" else s.photo end AS photo,
+			case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+			ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
+			exists((u)-[:LIKE]->(s)) AS is_liked
+  	`
+		params = map[string]interface{}{"postid": postid, "message": message, "privacy": privacy, "status": status}
+	}
+
+	res := []models.Post{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return models.Post{}, err
+	}
+	if len(res) > 0 && res[0].PostID >= 0 {
+		return res[0], nil
+	}
+
+	return models.Post{}, errors.New("Dont' update user status")
+}
+
+// DeleteUserPost func
+func DeleteUserPost(postid int) (bool, error) {
 	stmt := `
-	CREATE (s:Status:Post { props } ) SET s.created_at = TIMESTAMP() RETURN ID(s) as id
-	`
-	params := map[string]interface{}{"props": p}
+  	MATCH (s:Post)<-[r:POST]-(u:User) WHERE ID(s) = {postid}
+		DETACH DELETE s
+  	`
+	params := map[string]interface{}{"postid": postid}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// GetUserIDByPostID func
+func GetUserIDByPostID(postid int) (int, error) {
+	stmt := `
+    MATCH (u:User)-[r:POST]->(s:Post)
+		WHERE ID(s) = {postid}
+		RETURN ID(u) AS id
+  	`
+	params := map[string]interface{}{"postid": postid}
 	res := []struct {
 		ID int `json:"id"`
 	}{}
@@ -33,181 +202,250 @@ func CreateStatus(post models.Post) (int, error) {
 	return -1, nil
 }
 
-// GetFeedByUserID func
+// CheckExistUserPost func
+func CheckExistUserPost(postid int) (bool, error) {
+	return CheckExistNodeWithID(postid)
+}
 
-// // GetAllPost func
-// func GetAllPost() ([]models.Post, error) {
-// 	post := models.Post{}
-// 	stmt := `
-// 	MATCH (p:Post) RETURN ID(p), p.Content, p.Image, p.CreatedTime, p.UpdateTime, p.Status LIMIT 25;
-// 	`
-// 	res := []struct {
-// 		//id       int     `json:ID(u)`
-// 		PostID      int    `json:"ID(p)"`
-// 		Content     string `json:"p.Content"`
-// 		Image       string `json:"p.Image"`
-// 		CreatedTime string `json:"p.CreatedTime"`
-// 		UpdatedTime string `json:"p.UpdatedTime"`
-// 		Status      int    `json:"u.Status"`
-// 	}{}
-// 	cq := neoism.CypherQuery{
-// 		Statement: stmt,
-//
-// 		Result: &res,
-// 	}
-// 	err := conn.Cypher(&cq)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	k := int(len(res))
-// 	fmt.Printf("%d\n", k)
-// 	if k < 1 {
-// 		return nil, errors.New("No Post")
-// 	}
-// 	var listpost []models.Post
-// 	// fmt.Printf("%d\n", k)
-// 	for i := range res {
-//
-// 		post.PostID = int(res[i].PostID)
-// 		post.Content = res[i].Content
-// 		post.Image = res[i].Image
-// 		post.CreatedTime = res[i].CreatedTime
-// 		post.UpdatedTime = res[i].UpdatedTime
-// 		post.Status = int(res[i].Status)
-//
-// 		listpost = append(listpost, post)
-// 		fmt.Printf("%d\n", i)
-// 	}
-// 	return listpost, nil
-// }
-//
-// // GetPost func
-// func GetPost(postid int) (models.Post, error) {
-// 	var post = models.Post{}
-// 	stmt := `
-// 	MATCH (p:Post) WHERE ID(p) = {postid} RETURN ID(p), p.Content, p.Image , p.CreatedTime, p.UpdatedTime, p.Status LIMIT 25;
-// 	`
-// 	params := neoism.Props{"postid": postid}
-// 	res := []struct {
-// 		//id       int     `json:ID(u)`
-// 		PostID      int    `json:"ID(p)"`
-// 		Content     string `json:"p.Content"`
-// 		Image       string `json:"p.Image"`
-// 		CreatedTime string `json:"p.CreatedTime"`
-// 		UpdatedTime string `json:"p.UpdatedTime"`
-// 		Status      int    `json:"p.Status"`
-// 	}{}
-// 	cq := neoism.CypherQuery{
-// 		Statement:  stmt,
-// 		Parameters: params,
-// 		Result:     &res,
-// 	}
-// 	err := conn.Cypher(&cq)
-// 	// k := len(res)
-// 	// // fmt.Printf("%d\n", k)
-// 	// for index := 0; index < k; index++ {
-// 	// 	fmt.Printf("id: %d,\nuname: %s,\npass: %s,\nemail: %s,\nstatus: %d\n",
-// 	// 		int(res[index].UserID), res[index].Username, res[index].Password, res[index].Email, int(res[index].Status))
-// 	// }
-// 	if err != nil {
-// 		return post, err
-// 	}
-// 	if len(res) == 1 {
-// 		post = models.Post{PostID: res[0].PostID, Content: res[0].Content, Image: res[0].Image, CreatedTime: res[0].CreatedTime, UpdatedTime: res[0].UpdatedTime, Status: res[0].Status}
-// 		return post, nil
-// 	} else if len(res) > 1 {
-// 		return post, errors.New("Many User")
-// 	} else {
-// 		return post, errors.New("No User")
-// 	}
-// }
-//
-// // UpdatePost func
-// func UpdatePost(post models.Post) (bool, error) {
-//
-// 	stmt := `
-// 	MATCH (p:Post) WHERE ID(p) = {postid} SET p.Content = {content}, p.Image = {image}, p.Status = {status}, p.UpdatedTime = {updatetime};
-// 	`
-// 	params := neoism.Props{"postid": post.PostID, "content": post.Content, "image": post.Image, "status": post.Status, "updatetime": post.UpdatedTime}
-// 	res := false
-// 	cq := neoism.CypherQuery{
-// 		Statement:  stmt,
-// 		Parameters: params,
-// 		Result:     &res,
-// 	}
-//
-// 	err := conn.Cypher(&cq)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	return true, nil
-// }
-//
-// // DeletePost func
-// func DeletePost(postid int) (int, error) {
-// 	stmt := `
-// 	MATCH (p:Post) WHERE ID(p) = {postid} delete p RETURN count(p) ;
-// 	`
-// 	params := neoism.Props{"postid": postid}
-// 	res := -1
-// 	cq := neoism.CypherQuery{
-// 		Statement:  stmt,
-// 		Parameters: params,
-// 		Result:     &res,
-// 	}
-//
-// 	err := conn.Cypher(&cq)
-// 	return res, err
-// }
-//
-// //CheckExistPost func to check exist User
-// func CheckExistPost(postid int) (bool, error) {
-// 	where := fmt.Sprintf("ID(p) = %d", postid)
-// 	existNode, err := CheckExistNode("Post", where)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	if existNode == true {
-// 		return true, nil
-// 	}
-// 	return false, nil
-// }
-//
-// //GetPostByUserID func to get post info by userid of who write it
-// func GetPostByUserID(userid int) ([]models.Post, error) {
-// 	var post models.Post
-// 	stmt := `
-// 	MATCH (u:User{ID(u) = {userid}})-[w:Write]->(p:Post) RETURN ID(p), p.Content, p.Image , p.CreatedTime, p.UpdatedTime, p.Status LIMIT 25;
-// 	`
-// 	params := neoism.Props{"userid": userid}
-// 	res := []struct {
-// 		//id       int     `json:ID(u)`
-// 		PostID      int    `json:"ID(p)"`
-// 		Content     string `json:"p.Content"`
-// 		Image       string `json:"p.Image"`
-// 		CreatedTime string `json:"p.CreatedTime"`
-// 		UpdatedTime string `json:"p.UpdatedTime"`
-// 		Status      int    `json:"p.Status"`
-// 	}{}
-// 	cq := neoism.CypherQuery{
-// 		Statement:  stmt,
-// 		Parameters: params,
-// 		Result:     &res,
-// 	}
-// 	err := conn.Cypher(&cq)
-// 	// k := len(res)
-// 	// // fmt.Printf("%d\n", k)
-// 	// for index := 0; index < k; index++ {
-// 	// 	fmt.Printf("id: %d,\nuname: %s,\npass: %s,\nemail: %s,\nstatus: %d\n",
-// 	// 		int(res[index].UserID), res[index].Username, res[index].Password, res[index].Email, int(res[index].Status))
-// 	// }
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	var listpost []models.Post
-// 	for i := range res {
-// 		post = models.Post{PostID: res[i].PostID, Content: res[i].Content, Image: res[i].Image, CreatedTime: res[i].CreatedTime, UpdatedTime: res[i].UpdatedTime, Status: res[i].Status}
-// 		listpost = append(listpost, post)
-// 	}
-// 	return listpost, nil
-// }
+// GetUserPost func
+func GetUserPost(postid int, myuserid int) (models.Post, error) {
+	stmt := `
+		MATCH(me:User) WHERE ID(me) = {myuserid}
+		MATCH (s:Post)<-[:POST]-(u:User)
+		WHERE ID(s) = {postid}
+		RETURN
+			ID(s) AS id, s.message AS message, s.created_at AS created_at, s.updated_at AS updated_at,
+			case s.photo when null then "" else s.photo end AS photo,
+			case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+			ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
+			s.likes AS likes, s.comments AS comments, s.shares AS shares,
+			exists((me)-[:LIKE]->(s)) AS is_liked
+		`
+	params := map[string]interface{}{"postid": postid, "myuserid": myuserid}
+	res := []models.Post{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return models.Post{}, err
+	}
+	if len(res) > 0 && res[0].PostID == postid {
+		return res[0], nil
+
+	}
+
+	return models.Post{}, errors.New("ERROR in GetUserPost service: Postid <0")
+}
+
+// CreatePostLike func
+func CreatePostLike(postid int, userid int) (int, error) {
+	stmt := `
+	MATCH(u:User) WHERE ID(u) = {userid}
+	MATCH(s:Post) WHERE ID(s) = {postid}
+	MERGE(u)-[l:LIKE]->(s)
+	ON CREATE SET l.created_at = TIMESTAMP()
+	RETURN exists((u)-[l]->(s)) AS liked, s.likes AS likes
+	`
+	params := map[string]interface{}{"postid": postid, "userid": userid}
+	res := []struct {
+		Liked bool `json:"liked"`
+		Likes int  `json:"likes"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return -1, err
+	}
+	if len(res) > 0 && res[0].Liked == true {
+		return res[0].Likes + 1, nil
+	}
+	return -1, nil
+}
+
+// GetPostLikes func
+func GetPostLikes(postid int, myuserid int, orderby string, skip int, limit int) ([]models.SUserLike, error) {
+
+	stmt := fmt.Sprintf(`
+	MATCH (me:User) WHERE ID(me) = {myuserid}
+	MATCH (u:User)-[l:LIKE]->(s:Post)
+	WHERE ID(s) = {postid}
+	RETURN
+		ID(u) AS id, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
+		l.created_at as liked_at,
+		exists((me)-[:FOLLOW]->(u)) AS is_followed
+	ORDER BY %s
+	SKIP {skip}
+	LIMIT {limit}
+	`, orderby)
+	params := map[string]interface{}{
+		"postid":   postid,
+		"myuserid": myuserid,
+		"skip":     skip,
+		"limit":    limit,
+	}
+	res := []models.SUserLike{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) > 0 && res[0].UserID >= 0 {
+		return res, nil
+	}
+	return nil, nil
+}
+
+// DeletePostLike func
+func DeletePostLike(postid int, userid int) (int, error) {
+	stmt := `
+	MATCH (u:User)-[l:LIKE]->(s:Post) WHERE ID(s) = {postid} AND ID(u) = {userid}
+	DELETE l
+	RETURN s.likes AS likes
+	`
+	params := map[string]interface{}{"postid": postid, "userid": userid}
+	res := []struct {
+		Likes int `json:"likes"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return -1, err
+	}
+	if len(res) > 0 {
+		return res[0].Likes - 1, nil
+	}
+	return -1, nil
+}
+
+// CheckExistPostLike func
+func CheckExistPostLike(postid int, userid int) (bool, error) {
+	stmt := `
+  	MATCH (u:User)-[l:LIKE]->(s:Post)
+		WHERE ID(u) = {userid} AND ID(s) = {postid}
+		RETURN ID(l) as id
+  	`
+	params := neoism.Props{"postid": postid, "userid": userid}
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+	if len(res) > 0 && res[0].ID >= 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+// IncreasePostLikes func
+func IncreasePostLikes(postid int) (bool, error) {
+	stmt := `
+	MATCH (s:Post)
+	WHERE ID(s)= {postid}
+	SET s.likes = s.likes+1
+	RETURN ID(s) AS id
+	`
+	params := neoism.Props{"postid": postid}
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+	if len(res) > 0 && res[0].ID == postid {
+		return true, nil
+	}
+	return false, nil
+}
+
+// DecreasePostLikes func
+func DecreasePostLikes(postid int) (bool, error) {
+	stmt := `
+	MATCH (s:Post)
+	WHERE ID(s)= {postid}
+	SET s.likes = s.likes-1
+	RETURN ID(s) AS id
+	`
+	params := neoism.Props{"postid": postid}
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+	if len(res) > 0 && res[0].ID == postid {
+		return true, nil
+	}
+	return false, nil
+}
+
+// CheckPostInteractivePermission func to check interactive permisson for user with a post
+func CheckPostInteractivePermission(postid int, userid int) (bool, error) {
+	stmt := `
+		MATCH (who:User) WHERE ID(who) = {userid}
+		MATCH (u:User)-[r:POST]->(s:Status)
+		WHERE ID(s) = {postid}
+		RETURN exists((who)-[:FOLLOW]->(u)) AS followed, s.privacy AS privacy
+		`
+	params := map[string]interface{}{"userid": userid, "postid": postid}
+	res := []struct {
+		Followed bool `json:"followed"`
+		Privacy  int  `json:"privacy"`
+		Owner    bool `json:"owner"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+	if len(res) > 0 {
+		if res[0].Privacy == configs.Public || (res[0].Followed && res[0].Privacy == configs.ShareToFollowers || res[0].Owner) {
+			return true, nil
+		}
+	}
+	return false, nil
+
+}

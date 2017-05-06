@@ -4,3 +4,5 @@ package services
 // func GetNotification(userid int) ([]models.Notification, error) {
 //
 // }
+
+// GetDeviceByUserID
