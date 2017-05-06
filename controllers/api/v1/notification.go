@@ -22,6 +22,7 @@ func PushNotification(deviceid []string) (bool, error) {
 		RegistrationIDs:  deviceid,
 		ContentAvailable: true,
 		Priority:         fcm.PriorityHigh,
+		CollapseKey:      "Updates Available",
 		Notification: fcm.Notification{
 			Title: "Follow",
 			Body:  "World",
