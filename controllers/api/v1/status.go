@@ -282,9 +282,9 @@ func CreateStatusLike(c *gin.Context) {
 			return
 		}
 
-		liked, errLike := services.CreateStatusLike(statusid, userid)
-		if errLike == nil && liked == true {
-			libs.ResponseSuccessJSON(c, 1, "Like status successful", nil)
+		likes, errLike := services.CreateStatusLike(statusid, userid)
+		if errLike == nil && likes >= 0 {
+			libs.ResponseSuccessJSON(c, 1, "Like status successful", map[string]int{"likes": likes})
 
 			// auto Increase Status Likes
 			go func() {
@@ -343,9 +343,9 @@ func DeleteStatusLike(c *gin.Context) {
 			return
 		}
 
-		ok, errDel := services.DeleteStatusLike(statusid, userid)
-		if errDel == nil && ok == true {
-			libs.ResponseSuccessJSON(c, 1, "Unlike successful", nil)
+		likes, errDel := services.DeleteStatusLike(statusid, userid)
+		if errDel == nil && likes >= 0 {
+			libs.ResponseSuccessJSON(c, 1, "Unlike successful", map[string]int{"likes": likes})
 
 			// auto Decrease Status Likes
 			go func() {

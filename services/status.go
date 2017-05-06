@@ -202,17 +202,18 @@ func GetUserStatus(statusid int, myuserid int) (models.UserStatus, error) {
 }
 
 // CreateStatusLike func
-func CreateStatusLike(statusid int, userid int) (bool, error) {
+func CreateStatusLike(statusid int, userid int) (int, error) {
 	stmt := `
 	MATCH(u:User) WHERE ID(u) = {userid}
 	MATCH(s:Status) WHERE ID(s) = {statusid}
 	MERGE(u)-[l:LIKE]->(s)
 	ON CREATE SET l.created_at = TIMESTAMP()
-	RETURN exists((u)-[l]->(s)) AS liked
+	RETURN exists((u)-[l]->(s)) AS liked, s.likes AS likes
 	`
 	params := map[string]interface{}{"statusid": statusid, "userid": userid}
 	res := []struct {
 		Liked bool `json:"liked"`
+		Likes int  `json:"likes"`
 	}{}
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
@@ -221,12 +222,12 @@ func CreateStatusLike(statusid int, userid int) (bool, error) {
 	}
 	err := conn.Cypher(&cq)
 	if err != nil {
-		return false, err
+		return -1, err
 	}
 	if len(res) > 0 && res[0].Liked == true {
-		return true, nil
+		return res[0].Likes + 1, nil
 	}
-	return false, nil
+	return -1, nil
 }
 
 // GetStatusLikes func
@@ -267,13 +268,16 @@ func GetStatusLikes(statusid int, myuserid int, orderby string, skip int, limit 
 }
 
 // DeleteStatusLike func
-func DeleteStatusLike(statusid int, userid int) (bool, error) {
+func DeleteStatusLike(statusid int, userid int) (int, error) {
 	stmt := `
 	MATCH (u:User)-[l:LIKE]->(s:Status) WHERE ID(s) = {statusid} AND ID(u) = {userid}
 	DELETE l
+	RETURN s.likes AS likes
 	`
 	params := map[string]interface{}{"statusid": statusid, "userid": userid}
-	res := []models.SUser{}
+	res := []struct {
+		Likes int `json:"likes"`
+	}{}
 	cq := neoism.CypherQuery{
 		Statement:  stmt,
 		Parameters: params,
@@ -281,9 +285,12 @@ func DeleteStatusLike(statusid int, userid int) (bool, error) {
 	}
 	err := conn.Cypher(&cq)
 	if err != nil {
-		return false, err
+		return -1, err
 	}
-	return true, nil
+	if len(res) > 0 {
+		return res[0].Likes - 1, nil
+	}
+	return -1, nil
 }
 
 // CheckExistStatusLike func
