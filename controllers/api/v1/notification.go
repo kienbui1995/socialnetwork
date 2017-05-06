@@ -59,8 +59,8 @@ func PushTest(userid int, objectid int, tittle string, message string) {
 		ContentAvailable: true,
 		Priority:         fcm.PriorityHigh,
 		Notification: fcm.Notification{
-			Title: tittle,
-			Body:  message,
+			Title: "Thang Long Social",
+			Body:  tittle + "\n" + message,
 			Sound: "default",
 			Badge: "113",
 		},

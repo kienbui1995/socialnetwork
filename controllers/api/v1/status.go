@@ -25,8 +25,8 @@ func CreateUserStatus(c *gin.Context) {
 
 		json := struct {
 			Message string `json:"message"`
-			Privacy string `json:"privacy"`
-			Status  string `json:"status"`
+			Privacy int    `json:"privacy"`
+			Status  int    `json:"status"`
 		}{}
 		if errBind := c.Bind(&json); errBind != nil {
 			libs.ResponseJSON(c, 400, 100, "Invalid parameter: "+errBind.Error(), nil)
