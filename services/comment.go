@@ -207,10 +207,9 @@ func GetComment(commentid int) (models.UserComment, error) {
 }
 
 // CreateComment func
-func CreateComment(userid int, message string, privacy int, status int, objectid int) (int, error) {
+func CreateComment(userid int, message string, status int, objectid int) (int, error) {
 	p := neoism.Props{
 		"message": message,
-		"privacy": privacy,
 		"status":  status,
 	}
 	stmt := `

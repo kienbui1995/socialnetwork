@@ -133,7 +133,7 @@ func CreateComment(c *gin.Context) {
 		json.Privacy = 1
 	}
 
-	commentID, errcid := services.CreateComment(userid, json.Message, json.Privacy, json.Status, json.ObjectID)
+	commentID, errcid := services.CreateComment(userid, json.Message, json.Status, json.ObjectID)
 	if errcid == nil && commentID >= 0 {
 		libs.ResponseSuccessJSON(c, 1, "Create comment successful", map[string]interface{}{"id": commentID})
 
