@@ -480,7 +480,7 @@ func DecreasePostLikes(postid int) (bool, error) {
 func CheckPostInteractivePermission(postid int, userid int) (bool, error) {
 	stmt := `
 		MATCH (who:User) WHERE ID(who) = {userid}
-		MATCH (u:User)-[r:POST]->(s:Status)
+		MATCH (u:User)-[r:POST]->(s:Post)
 		WHERE ID(s) = {postid}
 		RETURN exists((who)-[:FOLLOW]->(u)) AS followed, s.privacy AS privacy
 		`
