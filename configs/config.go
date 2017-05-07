@@ -73,13 +73,14 @@ const (
 
 // TypePost const
 const (
-	PostWall        = 1
-	PostUploadPhoto = 2
-	PostGroup       = 3
-	PostShareLink   = 4
-	PostSharePost   = 5
-	PostSharePage   = 6
-	PostShareGroup  = 7
+	Post           = 0
+	PostStatus     = 1
+	PostPhoto      = 2
+	PostLink       = 3
+	PostGroup      = 4
+	PostSharePost  = 5
+	PostSharePage  = 6
+	PostShareGroup = 7
 )
 
 //FCMToken struct

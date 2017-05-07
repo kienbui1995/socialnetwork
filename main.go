@@ -40,7 +40,7 @@ func main() {
 
 			// user with post
 			RUser.POST("/:userid/posts", apiv1.CreateUserPost)     // create a post on the user's wall via userid13
-			RUser.GET("/:userid/posts", apiv1.GetUserPost)         // get a posts list on the user's wall via userid14
+			RUser.GET("/:userid/posts", apiv1.GetUserPosts)        // get a posts list on the user's wall via userid14
 			RUser.GET("/:userid/posts/:postid", apiv1.GetUserPost) // user get a own post15
 
 			// user witth follow
@@ -123,7 +123,7 @@ func main() {
 		// Work for Comment
 		RComment := authorized.Group("/comments")
 		{
-			RComment.POST("", apiv1.CreateComment)
+			// RComment.POST("", apiv1.CreateComment)
 			RComment.GET("/:commentid", apiv1.GetComment) // get a comment via commentid 42
 			RComment.PUT("/:commentid", apiv1.UpdateComment)
 			RComment.DELETE("/:commentid", apiv1.DeleteComment) //delete a comment via commentid

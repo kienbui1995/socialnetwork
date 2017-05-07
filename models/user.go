@@ -43,3 +43,12 @@ type UserObject struct {
 	FullName string `json:"full_name"`
 	Avatar   string `json:"avatar"`
 }
+
+// UserWall struct for get  user wall
+type UserWall struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	FullName string `json:"full_name"`
+	Avatar   string `json:"avatar"`
+	Posts    string `json:"pos"`
+}

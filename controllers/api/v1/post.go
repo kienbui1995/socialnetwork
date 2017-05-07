@@ -100,7 +100,16 @@ func GetUserPosts(c *gin.Context) {
 			libs.ResponseAuthJSON(c, 200, "Permissions error")
 			return
 		}
-
+		typePost := c.Query("type")
+		ItypePost := 0
+		if typePost != "photo" && typePost != "status" {
+			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: type")
+			return
+		} else if typePost == "photo" {
+			ItypePost = configs.PostPhoto
+		} else if typePost == "status" {
+			ItypePost = configs.PostStatus
+		}
 		sort := c.DefaultQuery("sort", "-created_at")
 		print(sort)
 		orderby, errSort := libs.ConvertSort(sort)
@@ -119,7 +128,7 @@ func GetUserPosts(c *gin.Context) {
 			return
 		}
 
-		postList, errList := services.GetUserPosts(userid, myuserid, orderby, skip, limit)
+		postList, errList := services.GetUserPosts(userid, myuserid, orderby, skip, limit, ItypePost)
 		if errList == nil {
 			libs.ResponseEntityListJSON(c, 1, "User Post List", postList, nil, len(postList))
 			return

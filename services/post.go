@@ -66,25 +66,63 @@ func CreateUserPost(userid int, message string, photo string, privacy int, statu
 }
 
 //GetUserPosts func
-func GetUserPosts(userid int, myuserid int, orderby string, skip int, limit int) ([]models.Post, error) {
-
-	stmt := fmt.Sprintf(`
-	    MATCH(u:User) WHERE ID(u) = {userid}
-			MATCH(me:User) WHERE ID(me) = {myuserid}
-	  	MATCH (s:Post)<-[r:POST]-(u)
-			WHERE s.privacy = 1 OR (s.privacy = 2 AND exists((me)-[:FOLLOW]->(u))) OR {userid} = {myuserid}
-			RETURN
-				ID(s) AS id, s.message AS message,
-				case s.photo when null then "" else s.photo end AS photo,
-				s.created_at AS created_at, s.updated_at AS updated_at,
-				case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
-				s.likes AS likes, s.comments AS comments, s.shares AS shares,
-				ID(u) AS userid, u.avatar AS avatar, u.full_name AS full_name, u.username AS username,
-				exists((me)-[:LIKE]->(s)) AS is_liked
-			ORDER BY %s
-			SKIP {skip}
-			LIMIT {limit}
-	  	`, orderby)
+func GetUserPosts(userid int, myuserid int, orderby string, skip int, limit int, typepost int) ([]models.Post, error) {
+	var stmt string
+	if typepost == configs.PostPhoto {
+		stmt = fmt.Sprintf(`
+		    MATCH(u:User) WHERE ID(u) = {userid}
+				MATCH(me:User) WHERE ID(me) = {myuserid}
+		  	MATCH (s::Photo:Post)<-[r:POST]-(u)
+				WHERE s.privacy = 1 OR (s.privacy = 2 AND exists((me)-[:FOLLOW]->(u))) OR {userid} = {myuserid}
+				RETURN
+					ID(s) AS id, s.message AS message,
+					case s.photo when null then "" else s.photo end AS photo,
+					s.created_at AS created_at, s.updated_at AS updated_at,
+					case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+					s.likes AS likes, s.comments AS comments, s.shares AS shares,
+					ID(u) AS userid, u.avatar AS avatar, u.full_name AS full_name, u.username AS username,
+					exists((me)-[:LIKE]->(s)) AS is_liked
+				ORDER BY %s
+				SKIP {skip}
+				LIMIT {limit}
+		  	`, orderby)
+	} else if typepost == configs.PostStatus {
+		stmt = fmt.Sprintf(`
+		    MATCH(u:User) WHERE ID(u) = {userid}
+				MATCH(me:User) WHERE ID(me) = {myuserid}
+		  	MATCH (s:Status:Post)<-[r:POST]-(u)
+				WHERE s.privacy = 1 OR (s.privacy = 2 AND exists((me)-[:FOLLOW]->(u))) OR {userid} = {myuserid}
+				RETURN
+					ID(s) AS id, s.message AS message,
+					case s.photo when null then "" else s.photo end AS photo,
+					s.created_at AS created_at, s.updated_at AS updated_at,
+					case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+					s.likes AS likes, s.comments AS comments, s.shares AS shares,
+					ID(u) AS userid, u.avatar AS avatar, u.full_name AS full_name, u.username AS username,
+					exists((me)-[:LIKE]->(s)) AS is_liked
+				ORDER BY %s
+				SKIP {skip}
+				LIMIT {limit}
+		  	`, orderby)
+	} else if typepost == configs.Post {
+		stmt = fmt.Sprintf(`
+		    MATCH(u:User) WHERE ID(u) = {userid}
+				MATCH(me:User) WHERE ID(me) = {myuserid}
+		  	MATCH (s:Post)<-[r:POST]-(u)
+				WHERE s.privacy = 1 OR (s.privacy = 2 AND exists((me)-[:FOLLOW]->(u))) OR {userid} = {myuserid}
+				RETURN
+					ID(s) AS id, s.message AS message,
+					case s.photo when null then "" else s.photo end AS photo,
+					s.created_at AS created_at, s.updated_at AS updated_at,
+					case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+					s.likes AS likes, s.comments AS comments, s.shares AS shares,
+					ID(u) AS userid, u.avatar AS avatar, u.full_name AS full_name, u.username AS username,
+					exists((me)-[:LIKE]->(s)) AS is_liked
+				ORDER BY %s
+				SKIP {skip}
+				LIMIT {limit}
+		  	`, orderby)
+	}
 	params := map[string]interface{}{
 		"userid":   userid,
 		"myuserid": myuserid,
@@ -102,9 +140,7 @@ func GetUserPosts(userid int, myuserid int, orderby string, skip int, limit int)
 		return nil, err
 	}
 	if len(res) > 0 && res[0].PostID >= 0 {
-
 		return res, nil
-
 	}
 	return nil, nil
 }
