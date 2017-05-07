@@ -445,7 +445,7 @@ func CreateUserTest(c *gin.Context) {
 
 }
 
-// GetNewsFeed func to create a new post
+// GetNewsFeed func to get a newsfeed
 func GetNewsFeed(c *gin.Context) {
 	userid, erruid := strconv.Atoi(c.Param("userid"))
 	if erruid != nil {
@@ -459,11 +459,17 @@ func GetNewsFeed(c *gin.Context) {
 			return
 		}
 
-		sort := c.DefaultQuery("sort", "-created_at")
-		orderby, errSort := libs.ConvertSort(sort)
-		if errSort != nil {
-			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSort.Error())
-			return
+		sort := c.DefaultQuery("sort", "pagerank")
+		var orderby string
+		if sort == "pagerank" {
+			orderby = sort
+		} else {
+			var errSort error
+			orderby, errSort = libs.ConvertSort(sort)
+			if errSort != nil {
+				libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSort.Error())
+				return
+			}
 		}
 		skip, errSkip := strconv.Atoi(c.DefaultQuery("skip", "0"))
 		if errSkip != nil {
@@ -475,8 +481,13 @@ func GetNewsFeed(c *gin.Context) {
 			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errLimit.Error())
 			return
 		}
-
-		newsList, errList := services.GetNewsFeed(userid, orderby, skip, limit)
+		var newsList []models.News
+		var errList error
+		if orderby == "pagerank" {
+			newsList, errList = services.GetNewsFeedWithPageRank(userid, skip, limit)
+		} else {
+			newsList, errList = services.GetNewsFeed(userid, orderby, skip, limit)
+		}
 		if errList == nil {
 			libs.ResponseEntityListJSON(c, 1, "Get news feed successful", newsList, nil, len(newsList))
 			return

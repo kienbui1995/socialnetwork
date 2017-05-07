@@ -574,6 +574,48 @@ func GetNewsFeed(userid int, orderby string, skip int, limit int) ([]models.News
 	return nil, nil
 }
 
+//GetNewsFeedWithPageRank func
+func GetNewsFeedWithPageRank(userid int, skip int, limit int) ([]models.News, error) {
+	stmt := `
+		MATCH(u:User) WHERE ID(u)= {userid}
+		MATCH(u)-[:FOLLOW]->(u1:User)-[:POST]->(p:Post)
+		WHERE p.privacy = 1 OR (p.privacy = 2 AND exists((u)-[:FOLLOW]->(u1))) OR u1 = u
+	    WITH u, u1, COLLECT(p) as posts
+	CALL apoc.algo.pageRank(posts) YIELD node AS s, score
+	RETURN
+			ID(s) AS id, s.message AS message, s.created_at AS created_at,
+		  case s.updated_at when null then "" else s.updated_at end AS updated_at,
+			case s.photo when null then "" else s.photo end AS photo,
+			case s.privacy when null then 1 else s.privacy end AS privacy,
+			case s.status when null then 1 else s.status end AS status,
+			ID(u1) AS userid, u1.full_name AS full_name, u1.avatar AS avatar, u1.username AS username,
+			s.likes AS likes, s.comments AS comments, s.shares AS shares,
+			exists((u)-[:LIKE]->(s)) AS is_liked
+	ORDER BY score DESC
+	SKIP {skip}
+	LIMIT {limit}
+	`
+	res := []models.News{}
+	params := map[string]interface{}{
+		"userid": userid,
+		"skip":   skip,
+		"limit":  limit,
+	}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) > 0 && res[0].ID >= 0 {
+		return res, nil
+	}
+	return nil, nil
+}
+
 //IncreasePosts func
 func IncreasePosts(userid int) (bool, error) {
 	stmt := `
