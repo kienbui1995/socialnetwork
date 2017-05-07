@@ -72,7 +72,7 @@ func GetUserPosts(userid int, myuserid int, orderby string, skip int, limit int,
 		stmt = fmt.Sprintf(`
 		    MATCH(u:User) WHERE ID(u) = {userid}
 				MATCH(me:User) WHERE ID(me) = {myuserid}
-		  	MATCH (s::Photo:Post)<-[r:POST]-(u)
+		  	MATCH (s:Photo:Post)<-[r:POST]-(u)
 				WHERE s.privacy = 1 OR (s.privacy = 2 AND exists((me)-[:FOLLOW]->(u))) OR {userid} = {myuserid}
 				RETURN
 					ID(s) AS id, s.message AS message,
