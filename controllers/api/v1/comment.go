@@ -97,7 +97,10 @@ func GetComment(c *gin.Context) {
 
 // CreateComment func  to create comment
 func CreateComment(c *gin.Context) {
-
+	postid, errpid := strconv.Atoi(c.Param("postid"))
+	if errpid != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter: "+errpid.Error())
+	}
 	//check permisson
 	userid, errGet := GetUserIDFromToken(c.Request.Header.Get("token"))
 	if errGet != nil {
@@ -106,10 +109,8 @@ func CreateComment(c *gin.Context) {
 	}
 
 	json := struct {
-		Message  string `json:"message"`
-		Privacy  int    `json:"privacy"`
-		Status   int    `json:"status"`
-		ObjectID int    `json:"objectid"` // id status/id photo
+		Message string `json:"message"`
+		Status  int    `json:"status"`
 	}{}
 	if errBind := c.Bind(&json); errBind != nil {
 		libs.ResponseJSON(c, 400, 100, "Invalid parameter: "+errBind.Error(), nil)
@@ -122,24 +123,18 @@ func CreateComment(c *gin.Context) {
 		return
 	}
 	// validation
-	if json.ObjectID == 0 {
-		libs.ResponseJSON(c, 400, 100, "Missing a few fields:  Object is 0", nil)
-		return
-	}
+
 	if json.Status == 0 {
 		json.Status = 1
 	}
-	if json.Privacy == 0 {
-		json.Privacy = 1
-	}
 
-	commentID, errcid := services.CreateComment(userid, json.Message, json.Status, json.ObjectID)
+	commentID, errcid := services.CreateComment(userid, json.Message, json.Status, postid)
 	if errcid == nil && commentID >= 0 {
 		libs.ResponseSuccessJSON(c, 1, "Create comment successful", map[string]interface{}{"id": commentID})
 
 		// auto Increase Posts
 		go func() {
-			ok, err := services.IncreaseObjectComments(json.ObjectID)
+			ok, err := services.IncreaseObjectComments(postid)
 			if err != nil {
 				fmt.Printf("ERROR in IncreaseObjectComments service: %s", err.Error())
 			}
@@ -151,7 +146,7 @@ func CreateComment(c *gin.Context) {
 		// push noti
 		go func() {
 			user, _ := services.GetUser(userid)
-			id, _ := services.GetUserIDByPostID(json.ObjectID)
+			id, _ := services.GetUserIDByPostID(postid)
 
 			if id >= 0 {
 				PushTest(id, 1, "@"+user.Username+" bình luận bài đăng của bạn", json.Message)

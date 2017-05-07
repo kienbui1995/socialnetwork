@@ -207,19 +207,19 @@ func GetComment(commentid int) (models.UserComment, error) {
 }
 
 // CreateComment func
-func CreateComment(userid int, message string, status int, objectid int) (int, error) {
+func CreateComment(userid int, message string, status int, postid int) (int, error) {
 	p := neoism.Props{
 		"message": message,
 		"status":  status,
 	}
 	stmt := `
 	MATCH (u:User) WHERE ID(u) = {userid}
-	MATCH (s) WHERE ID(s) = {objectid}
+	MATCH (s:Post) WHERE ID(s) = {postid}
 	CREATE (c:Comment { props } ) SET c.created_at = TIMESTAMP()
 	CREATE (u)-[w:WRITE]->(c)-[a:AT]->(s)
 	RETURN ID(c) AS id
 	`
-	params := map[string]interface{}{"props": p, "userid": userid, "objectid": objectid}
+	params := map[string]interface{}{"props": p, "userid": userid, "postid": postid}
 	res := []struct {
 		ID int `json:"id"`
 	}{}
