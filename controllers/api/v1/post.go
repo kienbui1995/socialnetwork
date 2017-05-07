@@ -102,7 +102,7 @@ func GetUserPosts(c *gin.Context) {
 		}
 		typePost := c.Query("type")
 		ItypePost := 0
-		if typePost != "photo" && typePost != "status" {
+		if typePost != "photo" && typePost != "status" && len(typePost) > 0 {
 			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: type")
 			return
 		} else if typePost == "photo" {
