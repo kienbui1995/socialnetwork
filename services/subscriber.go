@@ -80,7 +80,7 @@ func CheckExistUserSubscriber(fromid int, toid int) (bool, error) {
 		return false, err
 	}
 	if len(res) > 0 {
-		if res[0].ID > 0 {
+		if res[0].ID >= 0 {
 			return true, nil
 		}
 		return false, nil
