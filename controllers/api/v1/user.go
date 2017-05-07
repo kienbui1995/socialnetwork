@@ -354,19 +354,19 @@ func DeleteUserSubscribers(c *gin.Context) {
 	//var json interface{}
 
 	if len(c.Param("userid")) == 0 || len(c.Param("toid")) == 0 {
-		libs.ResponseJSON(c, 400, 100, "Invalid parameter: userid", nil)
+		libs.ResponseJSON(c, 400, 100, "Invalid parameter: userid/toid", nil)
 		return
 	}
 
 	sub.FromID, _ = strconv.Atoi(c.Param("userid"))
 	sub.ToID, _ = strconv.Atoi(c.Param("toid"))
 	if exist1, _ := services.CheckExistNodeWithID(sub.FromID); exist1 != true {
-		libs.ResponseJSON(c, 400, 110, "Invalid user id", nil)
+		libs.ResponseNotFoundJSON(c, 2, "No exist this object: fromid")
 		return
 	}
 
 	if exist2, _ := services.CheckExistNodeWithID(sub.ToID); exist2 != true {
-		libs.ResponseJSON(c, 400, 110, "Invalid user id", nil)
+		libs.ResponseNotFoundJSON(c, 2, "No exist this object")
 		return
 	}
 
@@ -376,7 +376,7 @@ func DeleteUserSubscribers(c *gin.Context) {
 	}
 
 	if exist, err := services.CheckExistUserSubscriber(sub.FromID, sub.ToID); exist == false || err != nil {
-		libs.ResponseJSON(c, 400, 2, "No exist this object", nil)
+		libs.ResponseNotFoundJSON(c, 2, "No exist this object")
 		return
 	}
 
