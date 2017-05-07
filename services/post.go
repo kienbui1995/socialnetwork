@@ -240,7 +240,29 @@ func GetUserIDByPostID(postid int) (int, error) {
 
 // CheckExistUserPost func
 func CheckExistUserPost(postid int) (bool, error) {
-	return CheckExistNodeWithID(postid)
+	stmt := `
+	MATCH (u:Post) WHERE ID(u)={postid} RETURN ID(u) AS id;
+	`
+	params := neoism.Props{"postid": postid}
+
+	res := []struct {
+		ID int `json:"id"`
+	}{}
+	cq := neoism.CypherQuery{
+		Statement:  stmt,
+		Parameters: params,
+		Result:     &res,
+	}
+
+	err := conn.Cypher(&cq)
+	if err != nil {
+		return false, err
+	}
+
+	if len(res) > 0 && res[0].ID == postid {
+		return true, nil
+	}
+	return false, nil
 }
 
 // GetUserPost func

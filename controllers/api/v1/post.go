@@ -249,11 +249,12 @@ func GetUserPost(c *gin.Context) {
 	postid, errpid := strconv.Atoi(c.Param("postid"))
 	if errpid != nil {
 		libs.ResponseBadRequestJSON(c, 100, "Invalid post id")
+
 	} else {
 
 		//check exist
 		if exist, _ := services.CheckExistUserPost(postid); exist != true {
-			libs.ResponseBadRequestJSON(c, 2, "No exist this object")
+			libs.ResponseNotFoundJSON(c, 2, "No exist this object")
 			return
 		}
 
