@@ -160,7 +160,9 @@ func UpdateUserPost(postid int, message string, photo string, privacy int, statu
 				ID(s) AS id, s.message AS message, s.photo AS photo, s.created_at AS created_at, s.updated_at AS updated_at,
 				case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
 				ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
-				exists((u)-[:LIKE]->(s)) AS is_liked
+				exists((u)-[:LIKE]->(s)) AS is_liked,
+				true AS can_edit,
+				true AS can_delete
 			`
 		params = map[string]interface{}{"postid": postid, "message": message, "photo": photo, "privacy": privacy, "status": status}
 	} else {
@@ -279,7 +281,9 @@ func GetUserPost(postid int, myuserid int) (models.Post, error) {
 			case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
 			ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
 			s.likes AS likes, s.comments AS comments, s.shares AS shares,
-			exists((me)-[:LIKE]->(s)) AS is_liked
+			exists((me)-[:LIKE]->(s)) AS is_liked,
+			CASE WHEN ID(u) = {myuserid} THEN true ELSE false END AS can_edit,
+			CASE WHEN ID(u) = {myuserid} THEN true ELSE false END AS can_delete
 		`
 	params := map[string]interface{}{"postid": postid, "myuserid": myuserid}
 	res := []models.Post{}
