@@ -76,12 +76,14 @@ func GetUserPosts(userid int, myuserid int, orderby string, skip int, limit int,
 				WHERE s.privacy = 1 OR (s.privacy = 2 AND exists((me)-[:FOLLOW]->(u))) OR {userid} = {myuserid}
 				RETURN
 					ID(s) AS id, s.message AS message,
-					case s.photo when null then "" else s.photo end AS photo,
+					CASE s.photo when null then "" else s.photo end AS photo,
 					s.created_at AS created_at, s.updated_at AS updated_at,
-					case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
+					CASE s.privacy when null then 1 else s.privacy end AS privacy, CASE s.status when null then 1 else s.status end AS status,
 					s.likes AS likes, s.comments AS comments, s.shares AS shares,
 					ID(u) AS userid, u.avatar AS avatar, u.full_name AS full_name, u.username AS username,
-					exists((me)-[:LIKE]->(s)) AS is_liked
+					exists((me)-[:LIKE]->(s)) AS is_liked,
+					CASE WHEN {userid} = {myuserid} THEN true ELSE false END AS can_edit,
+					CASE WHEN {userid} = {myuserid} THEN true ELSE false END AS can_delete
 				ORDER BY %s
 				SKIP {skip}
 				LIMIT {limit}

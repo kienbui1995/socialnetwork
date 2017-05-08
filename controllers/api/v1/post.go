@@ -46,7 +46,7 @@ func CreateUserPost(c *gin.Context) {
 			json.Privacy = 1
 		}
 		action := " cập nhật trạng thái"
-		if len(json.Photo) == 0 {
+		if len(json.Photo) > 0 {
 			action = " đăng ảnh"
 		}
 		postID, errpid := services.CreateUserPost(userid, json.Message, json.Photo, json.Privacy, json.Status)
