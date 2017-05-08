@@ -14,4 +14,6 @@ type News struct {
 	Comments  int    `json:"comments,omitempty"`
 	Shares    int    `json:"shares,omitempty"`
 	IsLiked   bool   `json:"is_liked"`
+	CanEdit   bool   `json:"can_edit"`
+	CanDelete bool   `json:"can_delete"`
 }
