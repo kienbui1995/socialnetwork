@@ -70,7 +70,7 @@ func CreateUserPost(c *gin.Context) {
 				ids, errGetIDs := services.GetFollowers(userid)
 				if len(ids) > 0 && errGetIDs == nil {
 					for index := 0; index < len(ids); index++ {
-						PushTest(ids[index].UserID, 1, "@"+user.Username+action, json.Message)
+						PushTest(ids[index].UserID, postID, "post", "@"+user.Username+action, json.Message)
 					}
 
 				}
@@ -317,7 +317,7 @@ func CreatePostLike(c *gin.Context) {
 			go func() {
 				post, _ := services.GetUserPost(postid, userid)
 				userLiked, _ := services.GetUser(userid)
-				PushTest(post.UserID, 1, "@"+userLiked.Username+" thích trạng thái của bạn", post.Message)
+				PushTest(post.UserID, postid, "post", "@"+userLiked.Username+" thích trạng thái của bạn", post.Message)
 
 			}()
 			return

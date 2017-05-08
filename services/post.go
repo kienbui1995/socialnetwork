@@ -161,6 +161,7 @@ func UpdateUserPost(postid int, message string, photo string, privacy int, statu
 				case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
 				ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
 				exists((u)-[:LIKE]->(s)) AS is_liked,
+				s.likes AS likes, s.comments AS comments, s.shares AS shares,
 				true AS can_edit,
 				true AS can_delete
 			`
@@ -176,6 +177,7 @@ func UpdateUserPost(postid int, message string, photo string, privacy int, statu
 			case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
 			ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
 			exists((u)-[:LIKE]->(s)) AS is_liked,
+			s.likes AS likes, s.comments AS comments, s.shares AS shares,
 			true AS can_edit,
 			true AS can_delete
   	`

@@ -42,11 +42,12 @@ func PushNotification(deviceid []string) (bool, error) {
 }
 
 // PushTest func
-func PushTest(userid int, objectid int, tittle string, message string) {
+func PushTest(userid int, objectid int, objecttype string, tittle string, message string) {
 
 	push := fcm.NewFCM(configs.FCMToken)
 	data := map[string]interface{}{
-		"id": objectid,
+		"id":   objectid,
+		"type": objecttype,
 	}
 	clientList, errList := services.GetDeviceByUserID(userid)
 	if errList != nil || clientList == nil {
@@ -59,9 +60,9 @@ func PushTest(userid int, objectid int, tittle string, message string) {
 		Priority:         fcm.PriorityHigh,
 		Notification: fcm.Notification{
 			Title: "Thang Long Social",
-			Body:  tittle + "\n" + message,
+			Body:  tittle + ":" + message,
 			Sound: "default",
-			Badge: "113",
+			Badge: "+1",
 		},
 	})
 	if err != nil {

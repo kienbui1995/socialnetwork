@@ -288,7 +288,7 @@ func CreateUserSubscribers(c *gin.Context) {
 	// push noti
 	go func() {
 		userFollowed, _ := services.GetUser(sub.FromID)
-		PushTest(sub.ToID, 1, "@"+userFollowed.Username+" vừa theo dõi bạn", "")
+		PushTest(sub.ToID, sub.FromID, "user", "@"+userFollowed.Username+" vừa theo dõi bạn", "")
 
 	}()
 }

@@ -149,7 +149,7 @@ func CreateComment(c *gin.Context) {
 			id, _ := services.GetUserIDByPostID(postid)
 
 			if id >= 0 {
-				PushTest(id, 1, "@"+user.Username+" bình luận bài đăng của bạn", json.Message)
+				PushTest(id, postid, "post", "@"+user.Username+" bình luận bài đăng của bạn", json.Message)
 			}
 
 		}()
