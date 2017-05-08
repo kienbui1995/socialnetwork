@@ -592,7 +592,9 @@ func GetNewsFeedWithPageRank(userid int, skip int, limit int) ([]models.News, er
 			case s.status when null then 1 else s.status end AS status,
 			ID(u1) AS userid, u1.full_name AS full_name, u1.avatar AS avatar, u1.username AS username,
 			s.likes AS likes, s.comments AS comments, s.shares AS shares,
-			exists((u)-[:LIKE]->(s)) AS is_liked
+			exists((u)-[:LIKE]->(s)) AS is_liked,
+			CASE WHEN ID(u1) = {userid} THEN true ELSE false END AS can_edit,
+			CASE WHEN ID(u1) = {userid} THEN true ELSE false END AS can_delete
 	ORDER BY score DESC
 	SKIP {skip}
 	LIMIT {limit}
