@@ -2,7 +2,6 @@ package v1
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/kienbui1995/socialnetwork/configs"
 	"github.com/kienbui1995/socialnetwork/services"
@@ -27,11 +26,11 @@ func PushNotification(deviceid []string) (bool, error) {
 			Title: "Follow",
 			Body:  "World",
 			Sound: "default",
-			Badge: "113",
+			Badge: "+1",
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		//log.Fatal(err)
 		fmt.Println("Status Code   :", response.StatusCode)
 		fmt.Println("Success       :", response.Success)
 		fmt.Println("Fail          :", response.Fail)
