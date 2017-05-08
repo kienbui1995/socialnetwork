@@ -175,7 +175,9 @@ func UpdateUserPost(postid int, message string, photo string, privacy int, statu
 			case s.photo when null then "" else s.photo end AS photo,
 			case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
 			ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
-			exists((u)-[:LIKE]->(s)) AS is_liked
+			exists((u)-[:LIKE]->(s)) AS is_liked,
+			true AS can_edit,
+			true AS can_delete
   	`
 		params = map[string]interface{}{"postid": postid, "message": message, "privacy": privacy, "status": status}
 	}
