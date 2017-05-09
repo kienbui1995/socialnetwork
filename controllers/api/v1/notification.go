@@ -46,8 +46,9 @@ func PushTest(userid int, objectid int, objecttype string, tittle string, messag
 
 	push := fcm.NewFCM(configs.FCMToken)
 	data := map[string]interface{}{
-		"id":   objectid,
-		"type": objecttype,
+		"id":      objectid,
+		"type":    objecttype,
+		"message": tittle + ": " + message,
 	}
 	clientList, errList := services.GetDeviceByUserID(userid)
 	if errList != nil || clientList == nil {
@@ -58,12 +59,6 @@ func PushTest(userid int, objectid int, objecttype string, tittle string, messag
 		RegistrationIDs:  clientList,
 		ContentAvailable: true,
 		Priority:         fcm.PriorityHigh,
-		Notification: fcm.Notification{
-			Title: "Thang Long Social",
-			Body:  tittle + ":" + message,
-			Sound: "default",
-			Badge: "+1",
-		},
 	})
 	if err != nil {
 		//log.Fatal(err)

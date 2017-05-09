@@ -25,7 +25,7 @@ func Login(c *gin.Context) {
 	}
 	defaultvalue := ""
 	if json.Username == defaultvalue || json.Password == defaultvalue || json.Device == defaultvalue {
-		libs.ResponseAuthJSON(c, configs.APIEcParamMissingField, "Missing a few fields.")
+		libs.ResponseAuthJSON(c, configs.EcParamMissingField, "Missing a few fields.")
 
 		return
 	}

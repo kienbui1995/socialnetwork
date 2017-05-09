@@ -28,17 +28,17 @@ func GetComments(c *gin.Context) {
 		print(sort)
 		orderby, errSort := libs.ConvertSort(sort)
 		if errSort != nil {
-			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSort.Error())
+			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errSort.Error())
 			return
 		}
 		skip, errSkip := strconv.Atoi(c.DefaultQuery("skip", "0"))
 		if errSkip != nil {
-			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSkip.Error())
+			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errSkip.Error())
 			return
 		}
 		limit, errLimit := strconv.Atoi(c.DefaultQuery("limit", "25"))
 		if errLimit != nil {
-			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errLimit.Error())
+			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errLimit.Error())
 			return
 		}
 
@@ -280,17 +280,17 @@ func DeleteComment(c *gin.Context) {
 // 		print(sort)
 // 		orderby, errSort := libs.ConvertSort(sort)
 // 		if errSort != nil {
-// 			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSort.Error())
+// 			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errSort.Error())
 // 			return
 // 		}
 // 		skip, errSkip := strconv.Atoi(c.DefaultQuery("skip", "0"))
 // 		if errSkip != nil {
-// 			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSkip.Error())
+// 			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errSkip.Error())
 // 			return
 // 		}
 // 		limit, errLimit := strconv.Atoi(c.DefaultQuery("limit", "25"))
 // 		if errLimit != nil {
-// 			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errLimit.Error())
+// 			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errLimit.Error())
 // 			return
 // 		}
 //
@@ -391,17 +391,17 @@ func DeleteComment(c *gin.Context) {
 // 		print(sort)
 // 		orderby, errSort := libs.ConvertSort(sort)
 // 		if errSort != nil {
-// 			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSort.Error())
+// 			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errSort.Error())
 // 			return
 // 		}
 // 		skip, errSkip := strconv.Atoi(c.DefaultQuery("skip", "0"))
 // 		if errSkip != nil {
-// 			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSkip.Error())
+// 			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errSkip.Error())
 // 			return
 // 		}
 // 		limit, errLimit := strconv.Atoi(c.DefaultQuery("limit", "25"))
 // 		if errLimit != nil {
-// 			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errLimit.Error())
+// 			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errLimit.Error())
 // 			return
 // 		}
 //

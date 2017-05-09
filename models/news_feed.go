@@ -5,6 +5,7 @@ type News struct {
 	UserObject
 	ID        int    `json:"id"`
 	Message   string `json:"message"`
+	Summary   bool   `json:"summary,omitempty"`
 	Photo     string `json:"photo,omitempty"`
 	CreatedAt int    `json:"created_at,omitempty"`
 	UpdatedAt int    `json:"updated_at,omitempty"`

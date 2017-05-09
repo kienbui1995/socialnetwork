@@ -5,6 +5,7 @@ type Post struct {
 	UserObject
 	PostID    int    `json:"id"` //Id
 	Message   string `json:"message"`
+	Summary   bool   `json:"summary,omitempty"`
 	Photo     string `json:"photo,omitempty"`
 	UpdatedAt int    `json:"updated_at,omitempty"`
 	CreatedAt int    `json:"created_at,omitempty"`

@@ -103,7 +103,7 @@ func GetUserPosts(c *gin.Context) {
 		typePost := c.Query("type")
 		ItypePost := 0
 		if typePost != "photo" && typePost != "status" && len(typePost) > 0 {
-			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: type")
+			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: type")
 			return
 		} else if typePost == "photo" {
 			ItypePost = configs.PostPhoto
@@ -114,17 +114,17 @@ func GetUserPosts(c *gin.Context) {
 		print(sort)
 		orderby, errSort := libs.ConvertSort(sort)
 		if errSort != nil {
-			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSort.Error())
+			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errSort.Error())
 			return
 		}
 		skip, errSkip := strconv.Atoi(c.DefaultQuery("skip", "0"))
 		if errSkip != nil {
-			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSkip.Error())
+			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errSkip.Error())
 			return
 		}
 		limit, errLimit := strconv.Atoi(c.DefaultQuery("limit", "25"))
 		if errLimit != nil {
-			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errLimit.Error())
+			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errLimit.Error())
 			return
 		}
 
@@ -401,17 +401,17 @@ func GetPostLikes(c *gin.Context) {
 
 		orderby, errSort := libs.ConvertSort(sort)
 		if errSort != nil {
-			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSort.Error())
+			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errSort.Error())
 			return
 		}
 		skip, errSkip := strconv.Atoi(c.DefaultQuery("skip", "0"))
 		if errSkip != nil {
-			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errSkip.Error())
+			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errSkip.Error())
 			return
 		}
 		limit, errLimit := strconv.Atoi(c.DefaultQuery("limit", "25"))
 		if errLimit != nil {
-			libs.ResponseBadRequestJSON(c, configs.APIEcParam, "Invalid parameter: "+errLimit.Error())
+			libs.ResponseBadRequestJSON(c, configs.EcParam, "Invalid parameter: "+errLimit.Error())
 			return
 		}
 
