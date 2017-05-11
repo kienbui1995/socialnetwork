@@ -12,9 +12,10 @@ import (
 
 func main() {
 	myfile, _ := os.Create("server.log")
-
+	filelog := io.MultiWriter(myfile, os.Stdout)
 	router := gin.Default()
-	router.Use(io.MultiWriter(myfile, os.Stdout))
+	router.Use(gin.LoggerWithWriter(filelog))
+
 	// Func Test
 	router.POST("/test/users", apiv1.CreateUserTest)
 	// router.POST("/test/push", apiv1.PushTest)

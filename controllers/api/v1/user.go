@@ -162,7 +162,7 @@ func UpdateUser(c *gin.Context) {
 		// })
 		return
 	}
-	var jsonUser map[string]interface{}
+	var jsonUser models.User
 
 	if c.Bind(&jsonUser) != nil {
 		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter"+c.Bind(&jsonUser).Error())

@@ -456,6 +456,57 @@ func CreateJoinGroupRequest(c *gin.Context) {
 	}
 }
 
+// GetJoinGroupRequest func ~doing
+func GetJoinGroupRequest(c *gin.Context) {
+	postid, errpid := strconv.Atoi(c.Param("postid"))
+	if errpid != nil {
+		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter: "+errpid.Error())
+	} else {
+
+		//check permisson
+		userid, _ := GetUserIDFromToken(c.Request.Header.Get("token"))
+
+		// check liked
+		if liked, _ := services.CheckExistPostLike(postid, userid); liked == true {
+			libs.ResponseBadRequestJSON(c, 3, "Exist this object: Likes")
+			return
+		}
+
+		likes, errLike := services.CreatePostLike(postid, userid)
+		if errLike == nil && likes >= 0 {
+			libs.ResponseSuccessJSON(c, 1, "Like post successful", map[string]int{"likes": likes})
+
+			// auto Increase post Likes
+			go func() {
+				ok, err := services.IncreasePostLikes(postid)
+				if err != nil {
+					fmt.Printf("ERROR in IncreasePostLikes service: %s", err.Error())
+				}
+				if ok != true {
+					fmt.Printf("ERROR in IncreasePostLikes service")
+				}
+			}()
+
+			// push noti
+			go func() {
+				post, _ := services.GetUserPost(postid, userid)
+				userLiked, _ := services.GetUser(userid)
+				PushTest(post.UserID, postid, "post", "@"+userLiked.Username+" thích trạng thái của bạn", post.Message)
+
+			}()
+			return
+		}
+
+		libs.ResponseServerErrorJSON(c)
+		if errLike != nil {
+			fmt.Printf("ERROR in CreatePostLike services: %s", errLike.Error())
+		} else {
+			fmt.Printf("ERROR in CreatePostLike services: Don't CreatePostLike")
+		}
+
+	}
+}
+
 // GetGroupMembers func ~doing
 func GetGroupMembers(c *gin.Context) {
 	postid, errpid := strconv.Atoi(c.Param("postid"))
