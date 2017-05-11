@@ -12,9 +12,9 @@ import (
 
 func main() {
 	myfile, _ := os.Create("server.log")
-	gin.DefaultWriter = io.MultiWriter(myfile, os.Stdout)
+
 	router := gin.Default()
-	router.Use(gin.LoggerWithFile(yourfile))
+	router.Use(io.MultiWriter(myfile, os.Stdout))
 	// Func Test
 	router.POST("/test/users", apiv1.CreateUserTest)
 	// router.POST("/test/push", apiv1.PushTest)
@@ -149,7 +149,7 @@ func main() {
 
 			// group with post
 			RGroup.POST("/:groupid/posts", apiv1.CreateGroupPost) // create a post or a status to a group by groupid 47
-			RGroup.GET("/:groupid/posts", apiv1.GetGroupPosts)    // get a posts list in a group by groupid 48
+			RGroup.GET("/:groupid/posts", apiv1.GetGroupFeed)     // get a posts list in a group by groupid 48
 
 			// group with members
 			RGroup.POST(":groupid/members", apiv1.CreateJoinGroup)                 // create join group
