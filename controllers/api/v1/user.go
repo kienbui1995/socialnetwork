@@ -162,14 +162,11 @@ func UpdateUser(c *gin.Context) {
 		// })
 		return
 	}
+	//	oldUser := services.GetUser(userid)
 	var jsonUser models.User
 
 	if c.Bind(&jsonUser) != nil {
 		libs.ResponseBadRequestJSON(c, 100, "Invalid parameter"+c.Bind(&jsonUser).Error())
-		// c.JSON(200, gin.H{
-		// 	"code":    -1,
-		// 	"message": err.Error(),
-		// })
 		return
 	}
 	var user models.User
@@ -178,13 +175,10 @@ func UpdateUser(c *gin.Context) {
 	if errCopy != nil {
 		libs.ResponseJSON(c, 200, 1, "Thong bao moi.", nil)
 	}
+
 	update, err = services.UpdateUser(user)
 	if err != nil {
 		libs.ResponseBadRequestJSON(c, 310, "User data edit failure")
-		// c.JSON(200, gin.H{
-		// 	"code":    -1,
-		// 	"message": err.Error(),
-		// })
 		return
 	}
 	if update == true {

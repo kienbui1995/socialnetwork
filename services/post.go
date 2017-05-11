@@ -101,7 +101,9 @@ func GetUserPosts(userid int, myuserid int, orderby string, skip int, limit int,
 					case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
 					s.likes AS likes, s.comments AS comments, s.shares AS shares,
 					ID(u) AS userid, u.avatar AS avatar, u.full_name AS full_name, u.username AS username,
-					exists((me)-[:LIKE]->(s)) AS is_liked
+					exists((me)-[:LIKE]->(s)) AS is_liked,
+					CASE WHEN {userid} = {myuserid} THEN true ELSE false END AS can_edit,
+					CASE WHEN {userid} = {myuserid} THEN true ELSE false END AS can_delete
 				ORDER BY %s
 				SKIP {skip}
 				LIMIT {limit}
@@ -119,7 +121,9 @@ func GetUserPosts(userid int, myuserid int, orderby string, skip int, limit int,
 					case s.privacy when null then 1 else s.privacy end AS privacy, case s.status when null then 1 else s.status end AS status,
 					s.likes AS likes, s.comments AS comments, s.shares AS shares,
 					ID(u) AS userid, u.avatar AS avatar, u.full_name AS full_name, u.username AS username,
-					exists((me)-[:LIKE]->(s)) AS is_liked
+					exists((me)-[:LIKE]->(s)) AS is_liked,
+					CASE WHEN {userid} = {myuserid} THEN true ELSE false END AS can_edit,
+					CASE WHEN {userid} = {myuserid} THEN true ELSE false END AS can_delete
 				ORDER BY %s
 				SKIP {skip}
 				LIMIT {limit}
