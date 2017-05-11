@@ -1,6 +1,8 @@
 package main
 
 import (
+	"io"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -9,8 +11,10 @@ import (
 )
 
 func main() {
-
+	myfile, _ := os.Create("server.log")
+	gin.DefaultWriter = io.MultiWriter(myfile, os.Stdout)
 	router := gin.Default()
+	router.Use(gin.LoggerWithFile(yourfile))
 	// Func Test
 	router.POST("/test/users", apiv1.CreateUserTest)
 	// router.POST("/test/push", apiv1.PushTest)
@@ -134,16 +138,29 @@ func main() {
 		}
 
 		// Work for Group
-		// RGroup := authorized.Group("/groups")
-		// {
-		// 	// user with post
-		// 	RGroup.GET("/:groupid", apiv1.GetGroup)              // get info of a group by groupid 46
-		// 	RGroup.POST("/:groupid/feed", apiv1.CreateGroupPost) // create a post or a status to a group by groupid 47
-		// 	RGroup.GET("/:groupid/feed", apiv1.GetGroupPosts)    // get a posts list in a group by groupid 48
-		// 	RGroup.GET("/:groupid/members", apiv1.GetMembers)    // get a users list in a group by groupid 49
-		// 	RGroup.PUT("/:groupid", apiv1.UpdatePost)            // update info of a group by groupid 50
-		// 	RGroup.DELETE("/:groupid", apiv1.DeleteGroup)        // delete a group by groupid 51
-		// }
+		RGroup := authorized.Group("/groups")
+		{
+			//
+			RGroup.POST("", apiv1.CreateGroup)            // create a group
+			RGroup.GET("", apiv1.GetGroups)               // get group list
+			RGroup.GET("/:groupid", apiv1.GetGroup)       // get info of a group by groupid 46
+			RGroup.PUT("/:groupid", apiv1.UpdateGroup)    // update info of a group by groupid 50
+			RGroup.DELETE("/:groupid", apiv1.DeleteGroup) // delete a group by groupid 51
+
+			// group with post
+			RGroup.POST("/:groupid/posts", apiv1.CreateGroupPost) // create a post or a status to a group by groupid 47
+			RGroup.GET("/:groupid/posts", apiv1.GetGroupPosts)    // get a posts list in a group by groupid 48
+
+			// group with members
+			RGroup.POST(":groupid/members", apiv1.CreateJoinGroup)                 // create join group
+			RGroup.POST(":groupid/members/requests", apiv1.CreateJoinGroupRequest) // create Request to Join a Private Group
+			RGroup.GET(":groupid/members/requests", apiv1.GetJoinGroupRequest)     // get Request list to Join a Private Group
+
+			// Replaced by  PUT /group-memberships-requests/requestid
+			RGroup.PUT(":groupid/members/requests", apiv1.GetJoinGroupRequest) // get Request list to Join a Private Group
+
+			RGroup.GET("/:groupid/members", apiv1.GetGroupMembers) // get a users list in a group by groupid 49
+		}
 
 	}
 	router.Run(":" + strconv.Itoa(configs.APIPort))
