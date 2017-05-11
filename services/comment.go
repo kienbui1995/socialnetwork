@@ -142,14 +142,17 @@ import (
 // }
 
 // GetComments func
-func GetComments(postid int, orderby string, skip int, limit int) ([]models.UserComment, error) {
+func GetComments(postid int, orderby string, skip int, limit int, userid int) ([]models.UserComment, error) {
 
 	stmt := fmt.Sprintf(`
+	MATCH (me:User) WHERE ID(me) = {userid}
 	MATCH (u:User)-[w:WRITE]->(c:Comment)-[a:AT]->(s:Post)
 	WHERE ID(s) = {postid}
 	RETURN
 		ID(c) AS id, c.message AS message, c.created_at AS created_at, c.updated_at AS updated_at ,c.status AS status,
-		ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar
+		ID(u) AS userid, u.username AS username, u.full_name AS full_name, u.avatar AS avatar,
+		ID(u) = ID(me) AS can_edit,
+		ID(u) = ID(me) AS can_delete
 	ORDER BY %s
 	SKIP {skip}
 	LIMIT {limit}
@@ -158,6 +161,7 @@ func GetComments(postid int, orderby string, skip int, limit int) ([]models.User
 		"postid": postid,
 		"skip":   skip,
 		"limit":  limit,
+		"userid": userid,
 	}
 
 	res := []models.UserComment{}

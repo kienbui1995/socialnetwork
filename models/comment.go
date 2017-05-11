@@ -11,4 +11,6 @@ type UserComment struct {
 	CreatedAt int    `json:"created_at,omitempty"`
 	UpdatedAt int    `json:"updated_at,omitempty"`
 	Status    int    `json:"status,omitempty"`
+	CanEdit   bool   `json:"can_edit"`
+	CanDelete bool   `json:"can_delete"`
 }

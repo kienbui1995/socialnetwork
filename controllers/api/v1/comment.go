@@ -42,7 +42,7 @@ func GetComments(c *gin.Context) {
 			return
 		}
 
-		commentList, errList := services.GetComments(postid, orderby, skip, limit)
+		commentList, errList := services.GetComments(postid, orderby, skip, limit, userid)
 		if errList == nil {
 			libs.ResponseEntityListJSON(c, 1, "User Post Comments List", commentList, nil, len(commentList))
 			return

@@ -36,7 +36,7 @@ func (sender Sender) SendMail(Dest []string, Subject, bodyMessage string) {
 
 	if err != nil {
 
-		fmt.Printf("smtp error: %s", err)
+		fmt.Printf("smtp error: %s\n", err)
 		return
 	}
 
